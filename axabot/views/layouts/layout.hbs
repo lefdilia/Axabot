@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>{{title}}</title>
+  {{> header }}
+</head>
+
+<body class="top-navigation md-skin">
+  <div id="wrapper">
+    <div id="page-wrapper" class="gray-bg">
+      {{> topnav }}
+      <div class="wrapper wrapper-content">
+        <div class="container largecnt">
+          <span id="updatests">{{{hasUpdate}}}</span>
+          {{{body}}}
+        </div>
+      </div>
+      {{> footer }}
+    </div>
+  </div>
+  {{> footerjs }}
+</body>
+
+</html>

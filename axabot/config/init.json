@@ -1,0 +1,46 @@
+{
+    "name": "AxaBot",
+    "port": 3000,
+    "dir_base": "/srv/seedbox/",
+    "dir_incomplete": "/srv/seedbox/incomplete",
+    "dir_downloads": "/srv/seedbox/downloads",
+    "dir_samples": "/srv/seedbox/downloads/Samples",
+    "dir_compressed": "/srv/seedbox/downloads/Compressed",
+    "dir_thumbnails": "/srv/seedbox/downloads/Thumbnails",
+    "dir_posts": "/srv/seedbox/downloads/Posts",
+    "rctorrent": "~/.rtorrent.rc",
+    "bin": {
+        "mtn": "/usr/local/bin/mtn"
+    },
+    "expt": [
+        "Samples",
+        "Thumbnails",
+        "Compressed",
+        "Posts"
+    ],
+    "keys": {
+        "tmdb": {
+            "key": "0000000000000000000000000"
+        },
+        "tvdb": {
+            "apikey": "00000000000000",
+            "userkey": "00000000000000",
+            "username": "axabotuser"
+        },
+        "transport": {
+            "user": "axabot@vpn.tg",
+            "pass": "00000000000"
+        },
+        "OAuth2": {
+            "type": "OAuth2",
+            "user": "lefdilia@gmail.com",
+            "clientId": "0000000000000-00000000000000000000000000000000.apps.googleusercontent.com",
+            "clientSecret": "0000000000000000000",
+            "refreshToken": "1/0000000000000000000000000000000000000000000"
+        }
+    },
+    "update": {
+        "code": "https://www.axabot.net/517658ebd16cb9db1bdc987d7aa5f348/update/_update.zip",
+        "changelog": "https://www.axabot.net/517658ebd16cb9db1bdc987d7aa5f348/update/changelog.json"
+    }
+}

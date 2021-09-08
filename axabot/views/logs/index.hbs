@@ -1,0 +1,162 @@
+<div class="row">
+    <div class="col-lg-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">
+                <h5>Link Logs : </h5>
+                <div class="ibox-tools col-md-5 col-md-offset-4">
+                    <input type="text" placeholder="Search a log..." name="logerpm" id="logerpm"
+                        class="logbox form-control">
+                    <center>
+                        <h4 id="srchkey"></h4>
+                    </center>
+                    <span id="_loadmespn" style="display:none;">
+                        <div class="sk-spinner sk-spinner-wave">
+                            <div class="sk-rect1"></div>
+                            <div class="sk-rect2"></div>
+                            <div class="sk-rect3"></div>
+                            <div class="sk-rect4"></div>
+                            <div class="sk-rect5"></div>
+                        </div>
+                    </span>
+                </div>
+            </div>
+            {{!--  --}}
+            <div class="ibox-content">
+                {{!--  --}}
+                <div id="_olaselistmfik"></div>
+                <span id="_loadselistmfik"></span>
+                <div id="_originalogs">
+                    {{#if this.data.length}}
+                        {{#each data}}
+                            <div class="faq-item">
+                                <div class="row">
+                                    <div class="col-md-7">
+                                        <a data-toggle="collapse" href="#{{this._id}}" data-id="{{this._id}}"
+                                            class="akview log-qu">{{this.name}}</a>
+                                        <small>
+                                            <strong>Created</strong> : {{{daterpl this.created true}}} <br>
+                                            {{#if this.profile.template}}
+                                                <strong>Template</strong> :
+                                                {{this.profile.template}}<br>
+                                            {{/if}}
+                                            {{#if this.profile.api}}
+                                                <strong>Api</strong> : {{this.profile.api}}<br>
+                                            {{/if}}
+                                            {{#if this.profile.name}}
+                                                <strong>Profile</strong> : {{this.profile.name}}<br>
+                                            {{/if}}
+                                            {{{iconSource this.topic.source}}}
+                                        </small>
+                                    </div>
+                                    <div class="col-md-4 pull-right">
+                                        <div class="ibox-tools">
+                                            <span class="small font-bold">{{this.topic.title}}
+                                                {{#if this.topic.year}}
+                                                    ({{this.topic.year}}){{/if}}</span>
+                                            <div class="tag-list">
+                                                <span class="tag-item text-success">{{count}} Links</span>
+                                                {{#if this.topic.type}}
+                                                    <span class="tag-item">{{this.topic.type}}</span>
+                                                {{/if}}
+                                                <span data-pi="{{this._id}}" class="tag-item">
+                                                    {{{status_posted this.posted.status}}}
+                                                </span>
+                                            </div>
+                                            <br>
+                                            <br>
+                                            <br>
+                                            <button data-id="{{this._id}}" data-tid="{{this.taskId}}"
+                                                class="btn btn-xs btn-success repostlog">
+                                                <i class="fa fa-chain-broken"></i> Post Data
+                                            </button>
+                                            <button data-id="{{this._id}}" data-tid="{{this.taskId}}"
+                                                class="btn btn-xs exportlog">
+                                                <i class="fa fa-database"></i> Export
+                                            </button>
+                                            <a data-toggle="collapse" href="#{{this._id}}" data-id="{{this._id}}"
+                                                data-tid="{{this.taskId}}" class="akview btn btn-default btn-xs">
+                                                <i class="fa fa-expand"></i> Expand
+                                            </a>
+                                            {{#if this.task_checker}}
+                                                <a data-id="{{this._id}}" class="btn btn-tcheckd btn-xs trashtlog"><i
+                                                        class="fa fa-trash"></i></a>
+                                            {{else}}
+                                                <button class="disabled btn btn-tcheckd btn-xs"><i
+                                                        class="fa fa-trash"></i></button>
+                                            {{/if}}
+                                            <br>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div id="{{this._id}}" class="panel-collapse collapse">
+                                            <br>
+                                            <div class="text-left checkbox checkbox-primary">
+                                                {{#if this.links_status}}
+                                                    <input data-lid="{{this._id}}" type="checkbox"
+                                                        {{#if this.hide_links}} checked="checked" {{/if}}
+                                                        name="hiden_links" class="achlinks" />
+                                                    <label><b class="text-primary">Use Shorten Links</b></label>
+                                                {{else}}
+                                                    <input data-lid="{{this._id}}" type="checkbox" disabled
+                                                        name="hiden_links" class="achlinks" />
+                                                    <label><b class="text-primary">Use Shorten Links</b></label>
+                                                {{/if}}
+                                            </div>
+                                            <div class="text-right">
+                                                <div data-toggle="buttons" class="btn-group">
+                                                    <label class="btn btn-sm btn-white active lablog" data-type="1">
+                                                        <input type="radio" id="option1" name="logoptions">
+                                                        <i class="fa fa-eye"></i> Preview </label>
+                                                    <label class="btn btn-sm btn-white lablog" data-type="2">
+                                                        <input type="radio" id="option2" name="logoptions">
+                                                        <i class="fa fa-code" aria-hidden="true"></i>
+                                                        Code </label>
+                                                    <label class="btn btn-sm btn-white lablog" data-type="3">
+                                                        <input type="radio" id="option3" name="logoptions">
+                                                        <i class="fa fa-bug" aria-hidden="true"></i></label>
+                                                </div>
+                                            </div>
+                                            <pre class="log-view">
+                                        <span id="logselection"><a href="javascript:;" class="btn btn-default btn-xs" onclick="selectText('pr_{{this._id}}')"><i class="fa fa-clipboard" aria-hidden="true"></i> Copy to clipboard</a></span>
+                                        <div id="pr_{{this._id}}"></div>
+                                    </pre>
+                                            <div id="vediv"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {{#unless @last}}
+                                <hr>
+                            {{/unless}}
+                        {{/each}}
+                    {{else}}
+                        <center>
+                            <h5><i class="fa fa-bar-chart"></i> No log entries available</h5>
+                        </center>
+                    {{/if}}
+                    {{#ifCond this.pagin.nmpages '>' '1' }}
+                        <hr>
+                        <div align="center">
+                            {{{ pagination 'logs' }}}
+                        </div>
+                    {{/ifCond}}
+                </div>
+                {{!--  --}}
+            </div>
+            {{!--  --}}
+        </div>
+    </div>
+</div>
+<script>
+    [
+        "/assets/js/sceditor/jquery.sceditor.min.js",
+        "/assets/js/sceditor/jquery.sceditor.bbcode.min.js"
+    ].forEach(function (src) {
+        var script = document.createElement('script');
+        script.src = src;
+        script.async = false;
+        document.head.appendChild(script);
+    });
+</script>

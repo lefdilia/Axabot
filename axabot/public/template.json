@@ -1,0 +1,131 @@
+{
+    "{grelease}": {
+        "data": "Captain Black 2017 WEBRip 720p YTS"
+    },
+    "{gtype}": {
+        "data": "movies"
+    },
+    "{gsize}": {
+        "data": "780 Mb"
+    },
+    "{gmagnet}": {
+        "data": "magnet:?xt=urn:btih:62f54401776ca15ac3ddddf2af8bb6cf0e71ade7&dn=example+of+magnet"
+    },
+    "{gthumbnail}": {
+        "data": "https://i.imgur.com/VgsFixs.png"
+    },
+    "{gthumbnail}(width=150)": {
+        "data": "https://i.imgur.com/VgsFixs.png"
+    },
+    "{gthumbnail}(width=150|height=220)": {
+        "data": "https://i.imgur.com/VgsFixs.png"
+    },
+    "{gposter}": {
+        "data": "https://i.imgur.com/1ACE69n.png"
+    },
+    "{gposter}(width=150)": {
+        "data": "<img width=\"150\" src=\"https://i.imgur.com/1ACE69n.png\" />"
+    },
+    "{gposter}(width=150|height=220)": {
+        "data": "<img width=\"150\" height=\"220\" src=\"https://i.imgur.com/1ACE69n.png\" />"
+    },
+    "{gnfo}": {
+        "data": "https://i.imgur.com/YwO4kMi.png"
+    },
+    "{gnfo}(width=150)": {
+        "data": "https://i.imgur.com/YwO4kMi.png"
+    },
+    "{gnfo}(width=150|height=220)": {
+        "data": "https://i.imgur.com/YwO4kMi.png"
+    },
+    "{gsample}": {
+        "data": "https://openload.co/f/4rAkCrIPYIk/Prf4847287328787_Sample_.mp4"
+    },
+    "{gsample}(link)": {
+        "data": "https://openload.co/f/4rAkCrIPYIk/Prf4847287328787_Sample_.mp4"
+    },
+    "{media_format}": {
+        "data": "Matroska / WebM"
+    },
+    "{media_bitrate}": {
+        "data": "709 kb/s"
+    },
+    "{media_encoder}": {
+        "data": "Lavf57.81.100"
+    },
+    "{video_duration}": {
+        "data": "24 minutes 21 seconds"
+    },
+    "{video_codec}": {
+        "data": "H264 (High)"
+    },
+    "{video_pixel_format}": {
+        "data": "yuv420p (progressive)"
+    },
+    "{video_resolution}": {
+        "data": "640x480 [SAR 4:3 DAR 16:9]"
+    },
+    "{video_aspect}": {
+        "data": "[SAR 4:3 - DAR 16:9]"
+    },
+    "{video_frame_rate}": {
+        "data": "29.97 fps"
+    },
+    "{video_size}": {
+        "data": "148 MB"
+    },
+    "{video_infos}": {
+        "data": "H264 (High), yuv420p (progressive), 640x480 [SAR 4:3 DAR 16:9], [SAR 4:3 - DAR 16:9], 29.97 fps"
+    },
+    "{audio_codec}": {
+        "data": "MP3"
+    },
+    "{audio_channel_layout}": {
+        "data": "Stereo"
+    },
+    "{audio_sample_rate}": {
+        "data": "48 kHz"
+    },
+    "{audio_sample_fmt}": {
+        "data": "s16p (eng)"
+    },
+    "{audio_infos}": {
+        "data": "aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 129 kb/s (und)"
+    },
+    "{mt_title}": {
+        "data": "Avengers: Endgame"
+    },
+    "{mt_year}": {
+        "data": "2019"
+    },
+    "{mt_runtime}": {
+        "data": "3h 1min"
+    },
+    "{mt_genres}": {
+        "data": "Action, Adventure, Sci-Fi"
+    },
+    "{mt_summary}": {
+        "data": "After the devastating events of Avengers: Infinity War (2018), the universe is in ruins. With the help of remaining allies, the Avengers assemble once more in order to reverse Thanos actions and restore balance to the universe."
+    },
+    "{mt_source}": {
+        "data": "https://www.themoviedb.org/tv/65405"
+    },
+    "{mt_poster}": {
+        "data": "http://image.tmdb.org/t/p/w500/w2MHfxPBUQYLL2bvpatKMnE2onK.jpg"
+    },
+    "{mt_poster}(width=150)": {
+        "data": "http://image.tmdb.org/t/p/w500/w2MHfxPBUQYLL2bvpatKMnE2onK.jpg"
+    },
+    "{mt_poster}(width=150|height=220)": {
+        "data": "http://image.tmdb.org/t/p/w500/w2MHfxPBUQYLL2bvpatKMnE2onK.jpg"
+    },
+    "{mt_stars}": {
+        "data": "Robert Downey Jr., Chris Evans, Mark Ruffalo"
+    },
+    "{mt_rating}": {
+        "data": "8.7/10"
+    },
+    "{download_links}": {
+        "data": "{download_links}"
+    }
+}

@@ -1,0 +1,141 @@
+<div class="ibox">
+    <div class="ibox-title">
+        <h5><i class="fa fa-cogs"></i>
+            Settings / Sites</h5>
+    </div>
+    <div class="ibox-content">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="tabs-container">
+                    {{> settings/tabs }}
+                    <div class="tab-content">
+                        <div id="sites" class="tab-pane active">
+                            <div class="panel-body">
+                                {{> settings/variables }}
+                                <div class="text-right">
+                                    <button data-toggle="collapse" data-type="json" style="margin-bottom: 1.4rem;"
+                                        class="btn btn-default btn-sm litemplates">
+                                        <i class="fa fa-list" aria-hidden="true"></i> List Templates
+                                    </button>
+                                    <button data-toggle="collapse" data-type="json" style="margin-bottom: 1.4rem;"
+                                        class="btn btn-primary btn-sm lsvariables">
+                                        <i class="fa fa-code" aria-hidden="true"></i> New JSON
+                                    </button>
+                                    <button data-toggle="collapse" data-type="template" style="margin-bottom: 1.4rem;"
+                                        class="btn btn-success btn-sm lsvariables">
+                                        <i class="fa fa-html5" aria-hidden="true"></i> Add Template
+                                    </button>
+                                </div>
+                                <p>&nbsp;</p>
+                                <div id="litemplates" style="display:;">
+                                    <table class="table table-border table-stripped">
+                                        {{#if this.templates.length}}
+                                            {{#each this.templates}}
+                                                <tr data-id="{{this._id}}">
+                                                    <td width="30%">
+                                                        <b>Name : </b> {{this.name}}<br>
+                                                        <p>&nbsp;</p>
+                                                        <div class="pull-left">
+                                                            <a class="btn btn-primary btn-xs editpl"
+                                                                data-type="{{this.data.type}}"
+                                                                href="javascript:void(0);"><i class="fa fa-pencil"></i>
+                                                                Edit</a>
+                                                            <button class="trashtpl btn btn-danger btn-xs"><i
+                                                                    class="fa fa-trash"></i></button>
+                                                        </div>
+                                                    </td>
+                                                    <td>{{#if this.data.title}}
+                                                            <b>Title</b> : <code class="language-html"
+                                                                data-lang="html">{{this.data.title}}</code>
+                                                        {{/if}}
+                                                        <span class="label label-default text-capitalize pull-right">
+                                                            {{this.data.type}}</span>
+                                                        <br>
+                                                        <br>
+                                                        <pre class="language-html pre-scrollable"
+                                                            data-lang="html">{{{fxTemplate this.data.template}}}</pre>
+                                                    </td>
+                                                </tr>
+                                            {{/each}}
+                                        {{else}}
+                                            <p>
+                                                <hr width="60%">
+                                            </p>
+                                            <center>
+                                                <p>
+                                                    <h5><i class="fa fa-exclamation-circle"></i> No Templates Available
+                                                    </h5>
+                                                </p>
+                                            </center>
+                                        {{/if}}
+                                    </table>
+                                </div>
+                                <div id="opform" style="display:none;">
+                                    <div class="form-group">
+                                        <label>Template Name</label>
+                                        <input type="text" placeholder="Default Movies Template" name="tplname"
+                                            class="form-control">
+                                        <small class="text-muted"><span class="text-danger">*</span> Name must be
+                                            Unique, if a template with the same name exists, it will be
+                                            overwritten</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Type</label>
+                                        <select class="form-control m-b" name="tpltype">
+                                            <option value="json">JSON</option>
+                                            <option value="bbcode">BBCODE</option>
+                                            <option value="html">HTML</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Title</label>
+                                        <input type="text" placeholder="{gtitle}" name="tpltitle" class="form-control">
+                                    </div>
+                                    <div id="tlarea" class="form-group"></div>
+                                    <div id="tplexamples" style="display: none;" class="pull-left">
+                                        <button data-type="movies"
+                                            class="extpl btn btn-sm btn-w-m btn-egbrown m-t-n-xs">
+                                            <span><i class="fa fa-film" aria-hidden="true"></i> Example Template</span>
+                                        </button>
+                                    </div>
+                                    <p>&nbsp;</p>
+                                    <pre id="tlpreview" style="display: none;"></pre>
+                                    <div class="pull-right">
+                                        <button id="savetpl" class="btn btn-xs btn-success m-t-n-xs">
+                                            <span><i class="fa fa-floppy-o" aria-hidden="true"></i> Save Template</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="varsmodal" class="modal fade" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span
+                            aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title"><i class="fa fa-code modal-icon"></i> Template Variables</h4>
+                    <small class="font-bold">List of available variables for Templates.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        [
+            "/assets/js/sceditor/jquery.sceditor.min.js",
+            "/assets/js/sceditor/jquery.sceditor.bbcode.min.js",
+            "/assets/js/sceditor/formats/bbcode.js",
+            "/assets/js/sceditor/plugins/undo.js",
+            "/assets/js/srcace-noconflict/ace.js"
+        ].forEach(function (src) {
+            var script = document.createElement('script');
+            script.src = src;
+            script.async = false;
+            document.head.appendChild(script);
+        });
+    </script>

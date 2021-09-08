@@ -1,0 +1,49 @@
+<div class="row border-bottom white-bg">
+    <nav class="navbar navbar-static-top" role="navigation">
+        <div class="navbar-header">
+            <button aria-controls="navbar" aria-expanded="false" data-target="#navbar" data-toggle="collapse"
+                class="navbar-toggle collapsed" type="button">
+                <i class="fa fa-reorder"></i>
+            </button>
+            <a href="/" class="navbar-brand"><img src="/assets/img/logo.png"> </a>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar">
+            <ul class="nav navbar-nav navbar-top-links">
+                <li>&nbsp; </li>
+                <li{{{activePage 'files'}}}>
+                    <a aria-expanded="false" role="button" href="/files/">
+                        <i class="fa fa-folder-open"></i> File Manager </a>
+                    </li>
+                    <li{{{activePage 'torrents'}}}>
+                        <a aria-expanded="false" role="button" href="/torrents/">
+                            <i class="fa fa-magnet"></i> Torrents</a>
+                        </li>
+                        <li{{{activePage 'tasks'}}}>
+                            <a aria-expanded="false" role="button" href="/tasks/">
+                                <i class="fa fa-tasks"></i> Tasks </a>
+                            </li>
+                            <li{{{activePage 'logs'}}}>
+                                <a aria-expanded="false" role="button" href="/logs/">
+                                    <i class="fa fa-bar-chart-o"></i> Logs </a>
+                                </li>
+                                <li{{{activePage 'settings'}}}>
+                                    <a aria-expanded="false" role="button" href="/settings/">
+                                        <i class="fa fa-cogs"></i> Settings </a>
+                                    </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-top-links navbar-right">
+                <li>
+                    <div class="pull-right" style="margin:1.988rem;">
+                        <span class="text-default font12-srv">
+                            <img src="/assets/img/static/cpu.png" style="vertical-align: text-top;"> <u>CPU</u>
+                            <span class="sktcpu">{{servermonitor 'cpu'}}</span>&nbsp;&nbsp;&nbsp;
+                            <img src="/assets/img/static/ram.png" style="vertical-align: text-top;"> <u>RAM</u>
+                            <span class="skturam">{{servermonitor 'used'}}</span> &nbsp;/&nbsp;<span
+                                class="sktram">{{servermonitor 'total'}}</span>
+                        </span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</div>

@@ -1,0 +1,120 @@
+{{!-- Modal of tasks --}}
+<div class="modal" id="addtasktr" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title"><i class="fa fa-list modal-icon"></i> Add new task </h4>
+                <small></small>
+            </div>
+            <div class="modal-body">
+                <fieldset>
+                    <form id="_form_src" class="form-horizontal" method="POST">
+                        <div class="text-center">
+                            <div class="input-group">
+                                <input name="prsearch" type="text" placeholder="Captain Marvel..."
+                                    class="input-md form-control">
+                                <div id="srctask" class="input-group-btn bs-dropdown-to-select-group">
+                                    <button type="button"
+                                        class="btn btn-default dropdown-toggle as-is bs-dropdown-to-select"
+                                        data-toggle="dropdown" style="border-radius: 0px;">
+                                        <span data-bind="bs-drp-sel-label"> -- </span>
+                                        <input type="hidden" name="selected_value" data-bind="bs-drp-sel-value"
+                                            value="">
+                                        &nbsp;<span class="caret"></span>
+                                        <span class="sr-only">Toggle Dropdown</span>
+                                    </button>
+                                    <a id="srchloop" class="btn btn-md btn-white"> <i class="fa fa-search"></i></a>
+                                    <ul class="dropdown-menu" id="mselect2" role="menu" style="">
+                                        {{#each this.types}}
+                                            <li data-value="{{lwrcs this}}"><a href="#">{{ucwrd this}}</a></li>
+                                        {{/each}}
+                                    </ul>
+                                </div>
+                                <input type="hidden" name="torr_task" id="torr_task">
+                                <input type="hidden" name="dtopic" id="dtopic">
+                                <input type="hidden" name="dProfile" id="dProfile">
+                                <input type="hidden" name="tpid" id="tpid">
+                                <input type="hidden" name="tdatapath" id="tdatapath">
+                            </div>
+                            <br>
+                            <button data-types='["movies", "tv"]' data-source="imdb" class="prezbtn btn btn-white"><img
+                                    style="max-height: 16px;" src="/assets/img/dgrab/imdb.png">
+                                IMDB
+                            </button>
+                            <button data-types='["movies", "tv"]' data-source="tmdb" class="prezbtn btn btn-white"><img
+                                    style="max-height: 16px;" src="/assets/img/dgrab/tmdb.png">
+                                TMDB
+                            </button>
+                            <button data-types='["tv"]' data-source="tvdb" class="prezbtn btn btn-white"><img
+                                    style="max-height: 16px;" src="/assets/img/dgrab/tvdb.png">
+                                TVDB
+                            </button>
+                            <button data-types='["tv"]' data-source="tvmaze" class="prezbtn btn btn-white"><img
+                                    style="max-height: 16px;" src="/assets/img/dgrab/tvmaze.png">
+                                TVmaze
+                            </button>
+                            <button
+                                data-types='["movies", "tv", "games", "music", "books", "anime", "applications", "miscellaneous", "other"]'
+                                data-source="internal" class="prezbtn btn btn-white">
+                                <i class="fa fa-database"></i>
+                                Internal
+                            </button>
+                        </div>
+                        <br>
+                        <span id="loadingbi" style="display:none">
+                            <div class="sk-spinner sk-spinner-three-bounce">
+                                <div class="sk-bounce1"></div>
+                                <div class="sk-bounce2"></div>
+                                <div class="sk-bounce3"></div>
+                            </div>
+                        </span>
+                    </form>
+                </fieldset>
+                <span id="preztable"></span>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    [
+        "/assets/js/plugins/bootstrap-tagsinput/bootstrap-tagsinput.js",
+        "/assets/js/plugins/switchery/switchery.js"
+    ].forEach(function (src) {
+        var script = document.createElement('script');
+        script.src = src;
+        script.async = false;
+        document.head.appendChild(script);
+    });
+
+    $(function () {
+        $('.addfeed').on('click', function () {
+            $('.tagsinput').tagsinput({
+                tagClass: 'label label-success',
+                freeInput: true,
+                trimValue: true
+            });
+
+            $('.tagsinput2').tagsinput({
+                tagClass: 'label label-primary',
+                freeInput: true,
+                trimValue: true
+            });
+        })
+    })
+
+    $(document).ajaxComplete(function () {
+        $('.tagsinput3').tagsinput({
+            tagClass: 'label label-success',
+            freeInput: true,
+            trimValue: true
+        });
+        $('.tagsinput4').tagsinput({
+            tagClass: 'label label-danger',
+            freeInput: true,
+            trimValue: true
+        });
+
+    });
+</script>

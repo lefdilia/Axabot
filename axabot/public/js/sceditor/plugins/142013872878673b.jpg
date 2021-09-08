@@ -1,0 +1,901 @@
+'use strict';
+
+var Long = require('../long').Long,
+  Double = require('../double').Double,
+  Timestamp = require('../timestamp').Timestamp,
+  ObjectID = require('../objectid').ObjectID,
+  Symbol = require('../symbol').Symbol,
+  Code = require('../code').Code,
+  MinKey = require('../min_key').MinKey,
+  MaxKey = require('../max_key').MaxKey,
+  Decimal128 = require('../decimal128'),
+  Int32 = require('../int_32'),
+  DBRef = require('../db_ref').DBRef,
+  BSONRegExp = require('../regexp').BSONRegExp,
+  Binary = require('../binary').Binary;
+
+var deserialize = function(buffer, options, isArray) {
+  options = options == null ? {} : options;
+  var index = options && options.index ? options.index : 0;
+  // Read the document size
+  var size =
+    buffer[index] |
+    (buffer[index + 1] << 8) |
+    (buffer[index + 2] << 16) |
+    (buffer[index + 3] << 24);
+
+  // Ensure buffer is valid size
+  if (size < 5 || buffer.length < size || size + index > buffer.length) {
+    throw new Error('corrupt bson message');
+  }
+
+  // Illegal end value
+  if (buffer[index + size - 1] !== 0) {
+    throw new Error("One object, sized correctly, with a spot for an EOO, but the EOO isn't 0x00");
+  }
+
+  // Start deserializtion
+  return deserializeObject(buffer, index, options, isArray);
+};
+
+var deserializeObject = function(buffer, index, options, isArray) {
+  var evalFunctions = options['evalFunctions'] == null ? false : options['evalFunctions'];
+  var cacheFunctions = options['cacheFunctions'] == null ? false : options['cacheFunctions'];
+  var cacheFunctionsCrc32 =
+    options['cacheFunctionsCrc32'] == null ? false : options['cacheFunctionsCrc32'];
+
+  if (!cacheFunctionsCrc32) var crc32 = null;
+
+  var fieldsAsRaw = options['fieldsAsRaw'] == null ? null : options['fieldsAsRaw'];
+
+  // Return raw bson buffer instead of parsing it
+  var raw = options['raw'] == null ? false : options['raw'];
+
+  // Return BSONRegExp objects instead of native regular expressions
+  var bsonRegExp = typeof options['bsonRegExp'] === 'boolean' ? options['bsonRegExp'] : false;
+
+  // Controls the promotion of values vs wrapper classes
+  var promoteBuffers = options['promoteBuffers'] == null ? false : options['promoteBuffers'];
+  var promoteLongs = options['promoteLongs'] == null ? true : options['promoteLongs'];
+  var promoteValues = options['promoteValues'] == null ? true : options['promoteValues'];
+
+  // Set the start index
+  var startIndex = index;
+
+  // Validate that we have at least 4 bytes of buffer
+  if (buffer.length < 5) throw new Error('corrupt bson message < 5 bytes long');
+
+  // Read the document size
+  var size =
+    buffer[index++] | (buffer[index++] << 8) | (buffer[index++] << 16) | (buffer[index++] << 24);
+
+  // Ensure buffer is valid size
+  if (size < 5 || size > buffer.length) throw new Error('corrupt bson message');
+
+  // Create holding object
+  var object = isArray ? [] : {};
+  // Used for arrays to skip having to perform utf8 decoding
+  var arrayIndex = 0;
+
+  var done = false;
+
+  // While we have more left data left keep parsing
+  // while (buffer[index + 1] !== 0) {
+  while (!done) {
+    // Read the type
+    var elementType = buffer[index++];
+    // If we get a zero it's the last byte, exit
+    if (elementType === 0) break;
+
+    // Get the start search index
+    var i = index;
+    // Locate the end of the c string
+    while (buffer[i] !== 0x00 && i < buffer.length) {
+      i++;
+    }
+
+    // If are at the end of the buffer there is a problem with the document
+    if (i >= buffer.length) throw new Error('Bad BSON Document: illegal CString');
+    var name = isArray ? arrayIndex++ : buffer.toString('utf8', index, i);
+
+    index = i + 1;
+
+    if (elementType === BSON.BSON_DATA_STRING) {
+      var stringSize =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+      if (
+        stringSize <= 0 ||
+        stringSize > buffer.length - index ||
+        buffer[index + stringSize - 1] !== 0
+      )
+        throw new Error('bad string length in bson');
+      object[name] = buffer.toString('utf8', index, index + stringSize - 1);
+      index = index + stringSize;
+    } else if (elementType === BSON.BSON_DATA_OID) {
+      var oid = new Buffer(12);
+      buffer.copy(oid, 0, index, index + 12);
+      object[name] = new ObjectID(oid);
+      index = index + 12;
+    } else if (elementType === BSON.BSON_DATA_INT && promoteValues === false) {
+      object[name] = new Int32(
+        buffer[index++] | (buffer[index++] << 8) | (buffer[index++] << 16) | (buffer[index++] << 24)
+      );
+    } else if (elementType === BSON.BSON_DATA_INT) {
+      object[name] =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+    } else if (elementType === BSON.BSON_DATA_NUMBER && promoteValues === false) {
+      object[name] = new Double(buffer.readDoubleLE(index));
+      index = index + 8;
+    } else if (elementType === BSON.BSON_DATA_NUMBER) {
+      object[name] = buffer.readDoubleLE(index);
+      index = index + 8;
+    } else if (elementType === BSON.BSON_DATA_DATE) {
+      var lowBits =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+      var highBits =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+      object[name] = new Date(new Long(lowBits, highBits).toNumber());
+    } else if (elementType === BSON.BSON_DATA_BOOLEAN) {
+      if (buffer[index] !== 0 && buffer[index] !== 1) throw new Error('illegal boolean type value');
+      object[name] = buffer[index++] === 1;
+    } else if (elementType === BSON.BSON_DATA_OBJECT) {
+      var _index = index;
+      var objectSize =
+        buffer[index] |
+        (buffer[index + 1] << 8) |
+        (buffer[index + 2] << 16) |
+        (buffer[index + 3] << 24);
+      if (objectSize <= 0 || objectSize > buffer.length - index)
+        throw new Error('bad embedded document length in bson');
+
+      // We have a raw value
+      if (raw) {
+        object[name] = buffer.slice(index, index + objectSize);
+      } else {
+        object[name] = deserializeObject(buffer, _index, options, false);
+      }
+
+      index = index + objectSize;
+    } else if (elementType === BSON.BSON_DATA_ARRAY) {
+      _index = index;
+      objectSize =
+        buffer[index] |
+        (buffer[index + 1] << 8) |
+        (buffer[index + 2] << 16) |
+        (buffer[index + 3] << 24);
+      var arrayOptions = options;
+
+      // Stop index
+      var stopIndex = index + objectSize;
+
+      // All elements of array to be returned as raw bson
+      if (fieldsAsRaw && fieldsAsRaw[name]) {
+        arrayOptions = {};
+        for (var n in options) arrayOptions[n] = options[n];
+        arrayOptions['raw'] = true;
+      }
+
+      object[name] = deserializeObject(buffer, _index, arrayOptions, true);
+      index = index + objectSize;
+
+      if (buffer[index - 1] !== 0) throw new Error('invalid array terminator byte');
+      if (index !== stopIndex) throw new Error('corrupted array bson');
+    } else if (elementType === BSON.BSON_DATA_UNDEFINED) {
+      object[name] = undefined;
+    } else if (elementType === BSON.BSON_DATA_NULL) {
+      object[name] = null;
+    } else if (elementType === BSON.BSON_DATA_LONG) {
+      // Unpack the low and high bits
+      lowBits =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+      highBits =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+      var long = new Long(lowBits, highBits);
+      // Promote the long if possible
+      if (promoteLongs && promoteValues === true) {
+        object[name] =
+          long.lessThanOrEqual(JS_INT_MAX_LONG) && long.greaterThanOrEqual(JS_INT_MIN_LONG)
+            ? long.toNumber()
+            : long;
+      } else {
+        object[name] = long;
+      }
+    } else if (elementType === BSON.BSON_DATA_DECIMAL128) {
+      // Buffer to contain the decimal bytes
+      var bytes = new Buffer(16);
+      // Copy the next 16 bytes into the bytes buffer
+      buffer.copy(bytes, 0, index, index + 16);
+      // Update index
+      index = index + 16;
+      // Assign the new Decimal128 value
+      var decimal128 = new Decimal128(bytes);
+      // If we have an alternative mapper use that
+      object[name] = decimal128.toObject ? decimal128.toObject() : decimal128;
+    } else if (elementType === BSON.BSON_DATA_BINARY) {
+      var binarySize =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+      var totalBinarySize = binarySize;
+      var subType = buffer[index++];
+
+      // Did we have a negative binary size, throw
+      if (binarySize < 0) throw new Error('Negative binary type element size found');
+
+      // Is the length longer than the document
+      if (binarySize > buffer.length) throw new Error('Binary type size larger than document size');
+
+      // Decode as raw Buffer object if options specifies it
+      if (buffer['slice'] != null) {
+        // If we have subtype 2 skip the 4 bytes for the size
+        if (subType === Binary.SUBTYPE_BYTE_ARRAY) {
+          binarySize =
+            buffer[index++] |
+            (buffer[index++] << 8) |
+            (buffer[index++] << 16) |
+            (buffer[index++] << 24);
+          if (binarySize < 0)
+            throw new Error('Negative binary type element size found for subtype 0x02');
+          if (binarySize > totalBinarySize - 4)
+            throw new Error('Binary type with subtype 0x02 contains to long binary size');
+          if (binarySize < totalBinarySize - 4)
+            throw new Error('Binary type with subtype 0x02 contains to short binary size');
+        }
+
+        if (promoteBuffers && promoteValues) {
+          object[name] = buffer.slice(index, index + binarySize);
+        } else {
+          object[name] = new Binary(buffer.slice(index, index + binarySize), subType);
+        }
+      } else {
+        var _buffer =
+          typeof Uint8Array !== 'undefined'
+            ? new Uint8Array(new ArrayBuffer(binarySize))
+            : new Array(binarySize);
+        // If we have subtype 2 skip the 4 bytes for the size
+        if (subType === Binary.SUBTYPE_BYTE_ARRAY) {
+          binarySize =
+            buffer[index++] |
+            (buffer[index++] << 8) |
+            (buffer[index++] << 16) |
+            (buffer[index++] << 24);
+          if (binarySize < 0)
+            throw new Error('Negative binary type element size found for subtype 0x02');
+          if (binarySize > totalBinarySize - 4)
+            throw new Error('Binary type with subtype 0x02 contains to long binary size');
+          if (binarySize < totalBinarySize - 4)
+            throw new Error('Binary type with subtype 0x02 contains to short binary size');
+        }
+
+        // Copy the data
+        for (i = 0; i < binarySize; i++) {
+          _buffer[i] = buffer[index + i];
+        }
+
+        if (promoteBuffers && promoteValues) {
+          object[name] = _buffer;
+        } else {
+          object[name] = new Binary(_buffer, subType);
+        }
+      }
+
+      // Update the index
+      index = index + binarySize;
+    } else if (elementType === BSON.BSON_DATA_REGEXP && bsonRegExp === false) {
+      // Get the start search index
+      i = index;
+      // Locate the end of the c string
+      while (buffer[i] !== 0x00 && i < buffer.length) {
+        i++;
+      }
+      // If are at the end of the buffer there is a problem with the document
+      if (i >= buffer.length) throw new Error('Bad BSON Document: illegal CString');
+      // Return the C string
+      var source = buffer.toString('utf8', index, i);
+      // Create the regexp
+      index = i + 1;
+
+      // Get the start search index
+      i = index;
+      // Locate the end of the c string
+      while (buffer[i] !== 0x00 && i < buffer.length) {
+        i++;
+      }
+      // If are at the end of the buffer there is a problem with the document
+      if (i >= buffer.length) throw new Error('Bad BSON Document: illegal CString');
+      // Return the C string
+      var regExpOptions = buffer.toString('utf8', index, i);
+      index = i + 1;
+
+      // For each option add the corresponding one for javascript
+      var optionsArray = new Array(regExpOptions.length);
+
+      // Parse options
+      for (i = 0; i < regExpOptions.length; i++) {
+        switch (regExpOptions[i]) {
+          case 'm':
+            optionsArray[i] = 'm';
+            break;
+          case 's':
+            optionsArray[i] = 'g';
+            break;
+          case 'i':
+            optionsArray[i] = 'i';
+            break;
+        }
+      }
+
+      object[name] = new RegExp(source, optionsArray.join(''));
+    } else if (elementType === BSON.BSON_DATA_REGEXP && bsonRegExp === true) {
+      // Get the start search index
+      i = index;
+      // Locate the end of the c string
+      while (buffer[i] !== 0x00 && i < buffer.length) {
+        i++;
+      }
+      // If are at the end of the buffer there is a problem with the document
+      if (i >= buffer.length) throw new Error('Bad BSON Document: illegal CString');
+      // Return the C string
+      source = buffer.toString('utf8', index, i);
+      index = i + 1;
+
+      // Get the start search index
+      i = index;
+      // Locate the end of the c string
+      while (buffer[i] !== 0x00 && i < buffer.length) {
+        i++;
+      }
+      // If are at the end of the buffer there is a problem with the document
+      if (i >= buffer.length) throw new Error('Bad BSON Document: illegal CString');
+      // Return the C string
+      regExpOptions = buffer.toString('utf8', index, i);
+      index = i + 1;
+
+      // Set the object
+      object[name] = new BSONRegExp(source, regExpOptions);
+    } else if (elementType === BSON.BSON_DATA_SYMBOL) {
+      stringSize =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+      if (
+        stringSize <= 0 ||
+        stringSize > buffer.length - index ||
+        buffer[index + stringSize - 1] !== 0
+      )
+        throw new Error('bad string length in bson');
+      object[name] = new Symbol(buffer.toString('utf8', index, index + stringSize - 1));
+      index = index + stringSize;
+    } else if (elementType === BSON.BSON_DATA_TIMESTAMP) {
+      lowBits =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+      highBits =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+      object[name] = new Timestamp(lowBits, highBits);
+    } else if (elementType === BSON.BSON_DATA_MIN_KEY) {
+      object[name] = new MinKey();
+    } else if (elementType === BSON.BSON_DATA_MAX_KEY) {
+      object[name] = new MaxKey();
+    } else if (elementType === BSON.BSON_DATA_CODE) {
+      stringSize =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+      if (
+        stringSize <= 0 ||
+        stringSize > buffer.length - index ||
+        buffer[index + stringSize - 1] !== 0
+      )
+        throw new Error('bad string length in bson');
+      var functionString = buffer.toString('utf8', index, index + stringSize - 1);
+
+      // If we are evaluating the functions
+      if (evalFunctions) {
+        // If we have cache enabled let's look for the md5 of the function in the cache
+        if (cacheFunctions) {
+          var hash = cacheFunctionsCrc32 ? crc32(functionString) : functionString;
+          // Got to do this to avoid V8 deoptimizing the call due to finding eval
+          object[name] = isolateEvalWithHash(functionCache, hash, functionString, object);
+        } else {
+          object[name] = isolateEval(functionString);
+        }
+      } else {
+        object[name] = new Code(functionString);
+      }
+
+      // Update parse index position
+      index = index + stringSize;
+    } else if (elementType === BSON.BSON_DATA_CODE_W_SCOPE) {
+      var totalSize =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+
+      // Element cannot be shorter than totalSize + stringSize + documentSize + terminator
+      if (totalSize < 4 + 4 + 4 + 1) {
+        throw new Error('code_w_scope total size shorter minimum expected length');
+      }
+
+      // Get the code string size
+      stringSize =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+      // Check if we have a valid string
+      if (
+        stringSize <= 0 ||
+        stringSize > buffer.length - index ||
+        buffer[index + stringSize - 1] !== 0
+      )
+        throw new Error('bad string length in bson');
+
+      // Javascript function
+      functionString = buffer.toString('utf8', index, index + stringSize - 1);
+      // Update parse index position
+      index = index + stringSize;
+      // Parse the element
+      _index = index;
+      // Decode the size of the object document
+      objectSize =
+        buffer[index] |
+        (buffer[index + 1] << 8) |
+        (buffer[index + 2] << 16) |
+        (buffer[index + 3] << 24);
+      // Decode the scope object
+      var scopeObject = deserializeObject(buffer, _index, options, false);
+      // Adjust the index
+      index = index + objectSize;
+
+      // Check if field length is to short
+      if (totalSize < 4 + 4 + objectSize + stringSize) {
+        throw new Error('code_w_scope total size is to short, truncating scope');
+      }
+
+      // Check if totalSize field is to long
+      if (totalSize > 4 + 4 + objectSize + stringSize) {
+        throw new Error('code_w_scope total size is to long, clips outer document');
+      }
+
+      // If we are evaluating the functions
+      if (evalFunctions) {
+        // If we have cache enabled let's look for the md5 of the function in the cache
+        if (cacheFunctions) {
+          hash = cacheFunctionsCrc32 ? crc32(functionString) : functionString;
+          // Got to do this to avoid V8 deoptimizing the call due to finding eval
+          object[name] = isolateEvalWithHash(functionCache, hash, functionString, object);
+        } else {
+          object[name] = isolateEval(functionString);
+        }
+
+        object[name].scope = scopeObject;
+      } else {
+        object[name] = new Code(functionString, scopeObject);
+      }
+    } else if (elementType === BSON.BSON_DATA_DBPOINTER) {
+      // Get the code string size
+      stringSize =
+        buffer[index++] |
+        (buffer[index++] << 8) |
+        (buffer[index++] << 16) |
+        (buffer[index++] << 24);
+      // Check if we have a valid string
+      if (
+        stringSize <= 0 ||
+        stringSize > buffer.length - index ||
+        buffer[index + stringSize - 1] !== 0
+      )
+        throw new Error('bad string length in bson');
+      // Namespace
+      var namespace = buffer.toString('utf8', index, index + stringSize - 1);
+      // Update parse index position
+      index = index + stringSize;
+
+      // Read the oid
+      var oidBuffer = new Buffer(12);
+      buffer.copy(oidBuffer, 0, index, index + 12);
+      oid = new ObjectID(oidBuffer);
+
+      // Update the index
+      index = index + 12;
+
+      // Split the namespace
+      var parts = namespace.split('.');
+      var db = parts.shift();
+      var collection = parts.join('.');
+      // Upgrade to DBRef type
+      object[name] = new DBRef(collection, oid, db);
+    } else {
+      throw new Error(
+        'Detected unknown BSON type ' +
+          elementType.toString(16) +
+          ' for fieldname "' +
+          name +
+          '", are you using the latest BSON parser'
+      );
+    }
+  }
+
+  // Check if the deserialization was against a valid array/object
+  if (size !== index - startIndex) {
+    if (isArray) throw new Error('corrupt array bson');
+    throw new Error('corrupt object bson');
+  }
+
+  // Check if we have a db ref object
+  if (object['$id'] != null) object = new DBRef(object['$ref'], object['$id'], object['$db']);
+  return object;
+};
+
+/**
+ * Ensure eval is isolated.
+ *
+ * @ignore
+ * @api private
+ */
+var isolateEvalWithHash = function(functionCache, hash, functionString, object) {
+  // Contains the value we are going to set
+  var value = null;
+
+  // Check for cache hit, eval if missing and return cached function
+  if (functionCache[hash] == null) {
+    eval('value = ' + functionString);
+    functionCache[hash] = value;
+  }
+  // Set the object
+  return functionCache[hash].bind(object);
+};
+
+/**
+ * Ensure eval is isolated.
+ *
+ * @ignore
+ * @api private
+ */
+var isolateEval = function(functionString) {
+  // Contains the value we are going to set
+  var value = null;
+  // Eval the function
+  eval('value = ' + functionString);
+  return value;
+};
+
+var BSON = {};
+
+/**
+ * Contains the function cache if we have that enable to allow for avoiding the eval step on each deserialization, comparison is by md5
+ *
+ * @ignore
+ * @api private
+ */
+var functionCache = (BSON.functionCache = {});
+
+/**
+ * Number BSON Type
+ *
+ * @classconstant BSON_DATA_NUMBER
+ **/
+BSON.BSON_DATA_NUMBER = 1;
+/**
+ * String BSON Type
+ *
+ * @classconstant BSON_DATA_STRING
+ **/
+BSON.BSON_DATA_STRING = 2;
+/**
+ * Object BSON Type
+ *
+ * @classconstant BSON_DATA_OBJECT
+ **/
+BSON.BSON_DATA_OBJECT = 3;
+/**
+ * Array BSON Type
+ *
+ * @classconstant BSON_DATA_ARRAY
+ **/
+BSON.BSON_DATA_ARRAY = 4;
+/**
+ * Binary BSON Type
+ *
+ * @classconstant BSON_DATA_BINARY
+ **/
+BSON.BSON_DATA_BINARY = 5;
+/**
+ * Binary BSON Type
+ *
+ * @classconstant BSON_DATA_UNDEFINED
+ **/
+BSON.BSON_DATA_UNDEFINED = 6;
+/**
+ * ObjectID BSON Type
+ *
+ * @classconstant BSON_DATA_OID
+ **/
+BSON.BSON_DATA_OID = 7;
+/**
+ * Boolean BSON Type
+ *
+ * @classconstant BSON_DATA_BOOLEAN
+ **/
+BSON.BSON_DATA_BOOLEAN = 8;
+/**
+ * Date BSON Type
+ *
+ * @classconstant BSON_DATA_DATE
+ **/
+BSON.BSON_DATA_DATE = 9;
+/**
+ * null BSON Type
+ *
+ * @classconstant BSON_DATA_NULL
+ **/
+BSON.BSON_DATA_NULL = 10;
+/**
+ * RegExp BSON Type
+ *
+ * @classconstant BSON_DATA_REGEXP
+ **/
+BSON.BSON_DATA_REGEXP = 11;
+/**
+ * Code BSON Type
+ *
+ * @classconstant BSON_DATA_DBPOINTER
+ **/
+BSON.BSON_DATA_DBPOINTER = 12;
+/**
+ * Code BSON Type
+ *
+ * @classconstant BSON_DATA_CODE
+ **/
+BSON.BSON_DATA_CODE = 13;
+/**
+ * Symbol BSON Type
+ *
+ * @classconstant BSON_DATA_SYMBOL
+ **/
+BSON.BSON_DATA_SYMBOL = 14;
+/**
+ * Code with Scope BSON Type
+ *
+ * @classconstant BSON_DATA_CODE_W_SCOPE
+ **/
+BSON.BSON_DATA_CODE_W_SCOPE = 15;
+/**
+ * 32 bit Integer BSON Type
+ *
+ * @classconstant BSON_DATA_INT
+ **/
+BSON.BSON_DATA_INT = 16;
+/**
+ * Timestamp BSON Type
+ *
+ * @classconstant BSON_DATA_TIMESTAMP
+ **/
+BSON.BSON_DATA_TIMESTAMP = 17;
+/**
+ * Long BSON Type
+ *
+ * @classconstant BSON_DATA_LONG
+ **/
+BSON.BSON_DATA_LONG = 18;
+/**
+ * Long BSON Type
+ *
+ * @classconstant BSON_DATA_DECIMAL128
+ **/
+BSON.BSON_DATA_DECIMAL128 = 19;
+/**
+ * MinKey BSON Type
+ *
+ * @classconstant BSON_DATA_MIN_KEY
+ **/
+BSON.BSON_DATA_MIN_KEY = 0xff;
+/**
+ * MaxKey BSON Type
+ *
+ * @classconstant BSON_DATA_MAX_KEY
+ **/
+BSON.BSON_DATA_MAX_KEY = 0x7f;
+
+/**
+ * Binary Default Type
+ *
+ * @classconstant BSON_BINARY_SUBTYPE_DEFAULT
+ **/
+BSON.BSON_BINARY_SUBTYPE_DEFAULT = 0;
+/**
+ * Binary Function Type
+ *
+ * @classconstant BSON_BINARY_SUBTYPE_FUNCTION
+ **/
+BSON.BSON_BINARY_SUBTYPE_FUNCTION = 1;
+/**
+ * Binary Byte Array Type
+ *
+ * @classconstant BSON_BINARY_SUBTYPE_BYTE_ARRAY
+ **/
+BSON.BSON_BINARY_SUBTYPE_BYTE_ARRAY = 2;
+/**
+ * Binary UUID Type
+ *
+ * @classconstant BSON_BINARY_SUBTYPE_UUID
+ **/
+BSON.BSON_BINARY_SUBTYPE_UUID = 3;
+/**
+ * Binary MD5 Type
+ *
+ * @classconstant BSON_BINARY_SUBTYPE_MD5
+ **/
+BSON.BSON_BINARY_SUBTYPE_MD5 = 4;
+/**
+ * Binary User Defined Type
+ *
+ * @classconstant BSON_BINARY_SUBTYPE_USER_DEFINED
+ **/
+BSON.BSON_BINARY_SUBTYPE_USER_DEFINED = 128;
+
+// BSON MAX VALUES
+BSON.BSON_INT32_MAX = 0x7fffffff;
+BSON.BSON_INT32_MIN = -0x80000000;
+
+BSON.BSON_INT64_MAX = Math.pow(2, 63) - 1;
+BSON.BSON_INT64_MIN = -Math.pow(2, 63);
+
+// JS MAX PRECISE VALUES
+BSON.JS_INT_MAX = 0x20000000000000; // Any integer up to 2^53 can be precisely represented by a double.
+BSON.JS_INT_MIN = -0x20000000000000; // Any integer down to -2^53 can be precisely represented by a double.
+
+// Internal long versions
+var JS_INT_MAX_LONG = Long.fromNumber(0x20000000000000); // Any integer up to 2^53 can be precisely represented by a double.
+var JS_INT_MIN_LONG = Long.fromNumber(-0x20000000000000); // Any integer down to -2^53 can be precisely represented by a double.
+
+module.exports = deserialize;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ûà!ãÇUYÀ#=ÌOëşá9S;å2^ìPñÇßÓÉDúøÒÂÄ]ÊÇdã+"Û°ª­VwP´ª·æ
+vU(bŸÂ%8ş}Sf¬ã/¨ ‘{r8üåÿ f,bñşfàzƒÎ6æ”hÑ@ gQDÆıÊeLÂ¡IÈ;¡¸í¸ïĞ=M>öãßT1±=öÿ ¯U‚xUAò£ó2œ­Û˜x”Ëà
+8ÀŸ ˆ”DÀòê¦xTİX_4ğ(î”/'©ÂXÔ-Ë4eÊ
+UŸN£d‰š2¢¡”l•zY”é””LÁÄZìˆ‘€şC‰Jz“C*Ò“3-ÀÃãåƒ¸Í=6Y<³¶ÈJ¿˜ÇÆÇ~«u#¨óÓWÈ±³jôêĞCEÈ[K<èÍOE+e¦_++&ÎkYáÊ*8‰v&q0Ù3&AÈŠp¨¥Šl±æZğj€pñ¸ ¨Øm"?!Ôôuá–àòı=”e4³ÈÔÍÇ{›xğş#ıxX¶]s©n™¯<‹²¥örizÁ$¥ÓTübU,S#²Új¹RDˆ
+…9pà;˜@¾z›•äµ2åtó‰« `Ãhëú6èAççƒwJMÂ4SŞ:­®H¿ÏduG›à®ÑëÏĞê3°+1o'_T’Ïœ8EËââéF%İØU9VP©——Ôæ¤I–P½/‚®ARMˆ*6æo{ßĞ[œyîIcĞ©~ ø¯òµ­€‰½*ÙL³ÈÎ¾î9‰°H¿—~Dƒ‹f&ävå$‘‡Û¢U\˜B'ò›}„z“<éQ(U€úØX_øë‹º@È
+ºŸíø``Ok
+¿¶TJtÚ¸LÈ¤DÔ÷`tÇˆHb”¢Ÿ!ù€  qÜ¡š†b“§•=|±c¼ˆøn0»µÂÜdõcwQ›eÕ3ê¦U‰î]¨báj"i¦S¬àÀFÆ0€ ñ(ò›~¡ÛOP ëâã×Äpƒ¯¥UÌ³OóóåïŸ<}ñ5cHÖš­5S¹f,Iu"–E/*miŞN¯:Iœ³ÓÖ™ú1‹h%&«2Tî½r«ÉÊb‰À¡cŞeL‘­MD‘IÉf¸ymøü^ _Ì’K!¥‚9b²±ØyøæÆö;Œv•¥ù
+Êöé˜#n®ãœ¼Ÿ§ÁáOz„dÃY7Í™× ¦—tàgÜÊÇ1*€°¦’-–QP1”öŠAyeÊdT3æU
+äªÅ3eä16ëù¾}9¸¹ª»÷9|M“-Á –#¨·êß‚'Ç•µ±TİâÇİ'[]Üà\A¼¯I;›p…vÓQ`Ñ6Kü)!E^ñeİ¤qyí&¨¦ËöËø6y^ §yu+±‹‹Ğ[Â-Ï%· “-`udQ¤…ÆÀÀ KMùäz_Ô²ˆ¿ÇšéÕ$ŒëZÂ£	¦ÄÛî¡™±zÆËi•’ˆYf©œYGÈE¤ª}áLæES¶Ø«4%ìû³Ö™‘6ió‹¥ÿ hôÅK™%Î³å^XÁIûN~xjxnÁGÕÚoM³«6sL˜3„é/ÀV:p3	¢«Ò70¶7yÕzQFü6/"”Gº@ «»¸hBT’vüßŠ©èä§ê¢S½}ëùß÷àNËŞºy%wÉ9
+WáÌ%B|ŒƒÔ(3çÈ–ÉšÊîSH’Ğ5ÈölXÄƒTATd$TÊa0$c ï}Oª©èh™¤‰äŸo7·Ÿ.¬<Î!o†¢¢(bb]º\mA'ÏÓ×=ÏBg±5†İP‘FÅYYDáK©Öh«dš*éÌäš»“¿$-Qäa8[§â &Ü<Qfõ-*VKáºÛ­½˜£Ï¦,¢G4ä-¼ú_Óç…á§r_	Òn@™\±ƒ¶xÏ(¤r‰œ¨â5¨•p8n;2³VÓL9 lWmV)‡t_ÚB4f¼Ì©éb¶E˜;UÓÑVW&X¿çC1eÿ šÈmyIzÜº$›ë1€Œ<î8í[¿GJÎZJz¹š]Ş<Çf^ne¬j+½p¼¡PíW@#Óä«æM\Ê9I0=Œ ;qn¶˜æôu5¥½š3snH pmùÂşğÛœDÎ¨¤l²®
+k-C®ĞOAqb~ì~ué—1üÎF¼Ûì0r,	+ ¿Â˜¤ÉRÎMª¢Š,ÁXÔ¦½²í 
+
+œ
+BítM[[øS7¨x‰÷ÃÇ¡µ¹°çÙuPÑSS	* cŠÓÆË¯m/äµ äê”êõ¢NbV&aâ.Vt»ƒ÷ ©RD3@Ê*sÆ0n]€7yÉîrŠäŞ²:²›€@ÚnEù¹ôÅ”0™*#‰ZÌü}¤q¯ä·ÄU»jáeĞ™h/®A@Ì Uzùä‹–‡”Å0JmÃëĞœë¶W?›so%enL– xH¿¯_~|†íXˆ%›gİ¸.Ì~B*Vèœ‡0.‹DÊ¢êLQÄ~ÏòŞ–¥@fkò:àï/s,À»—úN)ìEH‡ ®şU³"¹¶Y8¼8àÅ;¥ps(X‘›BDà¹_·ˆmsk1ß9«’¶5Œ½ CÂQçñÇšş+ÉÂØ¾&£Á59\(€(¹E	¸ÓîQÊ° RnCø/ËçùõıTQ©dTqŒ½Hëñ>XáEd–B9öøuûp¡3]z0¹È¢I‘Œ¤Ìä2İô”äÑy^I&fÂR—´Ñ7m¹S7’-çoÎÓ¤¾O!rC,jÃ¤pG™·LK+¨eÈ@?gıøõÏÇœì#bÒN)4Û(R6'aÃs¢P? "½ôø|¦ 2@>@v¥!UyØİ¼½ÇìûqÍØ±-ëóV­Ù¶W(=:è¨rÊDéòH º%1Jt…¹DDÄ@  G®r‚Ãzğ½>'ã«+måµ$i„1“]4¢œ¢mÑ:æ­TtC-ø*vª*±J"]øÀóÔy j˜$dú@¤|øò±‚¨‰az°ç¦ıUZİÔµn†L£È$ÂR³LÁVX	wÍÊ$ÊN;Ô¸x³i¬Íór,P†)‹·À:7ÈjÍ.WJñ’¦7b/Í¹=|7ã
+Šº¨«¬†Q¸4²+XÚã{«›âßsv×n;•¸)e£<¬Ø$ÁÖg³;>'­œ´¾ËAÀ¹ƒ¦@ö£	;fmÙ¶HWY95D‚™„Ä"r³Ë<¥škÂSñ‰M·Ø›\Ø×wÇ¬¿*Éjã„,Á‡Ñ¨0¹@[oÄ…¹$ğT^ş·}K5ë©.6ˆ UU–‰UÄÎE	!bvøÏÂØJ±LIgr¦‡¼HÎ^ã…½À®mêH`¼‘ºÒîµÚmÖ·[:^à…İÉ7&äùnÓ3Ï¤ªjJÜ˜ø…ù6¾ÓÖÖ¶ë[f‘u$ò)JÖ_†wöa¤kÃÌPYÂ,iÚëç$'ÅÙ¢’jXÈ®§%N' öÔ0¨»Ô9î¢zYés¨ÙiÀ;á
+LˆK5‡ŒX|È°<ÌL‡!Y…NS(i• ²ğ0•?›k!äy/İG[Æ—œµ‰a=qk“š†âbDH)EÆ;qJÈ
+”óN“p‚%n˜™0Oc¹T½²‰6èó+ÖèÍPN?hÍMüøšíwó>_<E¨µ&Ár°RñóY,pbœÍ“j9Â”Ø6›¬Z!n±ŠAG¦Â
+A³Ç(ª*¦9M3·9Nc÷QäaåÑfUC&^ôé‚Ö¹İÔXõ?gÇÄÎÎâSt`E¼¬xçíÇô©åÌo›hP×èGÍm‹7á“ØÚ¬‘J‹yJóæÒñs»ã V¯#¢³Q*¢Bƒ„7åÇct¾j"¬ñÈ¤7B?Ókd’0ßAcä|ü°¦ğ–ÈU<S‘±ÜMŒ°5\ºùó‰+áHşÕ“QËuÑ¦0˜)c¡˜işjy‡i ¬a9Z¦rÇÀ’¤{xûGîÅ•LñK:ÊVî¢ö¿™õ·_[yq{cšhÈã‚r9ågLäØîëö')´E#.d«‹>1–Æíı¡õcg¤üÇn.ù€u¢õ´tÚç"öX™	Ó±š‰üûYá=<3'‡àÁc¬HùUiÜ§¹<ê<›øòÃÙÆvJşzƒÙÅæ§¾Ğ.Ùz„…<¶,­\‚n¡ÔˆÔ,y£¥˜œ¦#¥ÎFé¦a1ŒQ Ï9ndhfÙ0q0&âŞ%#ªØşw‘Ïuyq¬»ÛcÔ“a÷‹şÎ¸j9Å=m#3ˆíÏm0ík•0”^nr%‹g³—¾â6ª”‹ùVJ|ÆAŠÀ<Àâ@ 1<y‹×T’iå©Õ˜Y@ä°ÜçŸtÏAŠ§È„`8¨B ÜØ[ìêmó8tñâš›ÄPóõua<L³à®Ôw¸¯€r§hHÙĞ{Ç<)B”©Ì£ÑÕE/t*¸2ÀàğÓF§§‚zâ¿ÙÚ–^õTŠÍ÷) ıãôÕM«X~œz\É÷wC!zÇJMéã ÊüáÌ»ŒXœt5ZÈà¤À’Ò´W1Bºe *«¦¢¿éWİ¨iˆt~°ÎrzrŞÅhåŠıBH¡­ÔÜŞÏm±CWûu5»ù °&ÿ +õãÏş_M•ŒÔÔƒDb£ŠıÊ‡Ieİ¢ªÛcÀØ¨$!òsn>D ¥%C’HÙç××¥Ú¼…âN‡ï'Ï¦ÍÃÔ+Õf–c)}„]$\"»³0Hê‹TNfAÓvEYVÑT»˜È@|€^àÉóZÒ%¥¢r/Ğ}—µğJÙZÄo ZÖê~|_ïòÅ'|õYÒ@H&×çvs’1-Ş8Šb¬‚1â¤£C{7.µì¤ØSäŸÊs?7¥’hm[QO$‘d“ A±k(<y\ÜÛ®9EIEÚjø"0°$ØÛáçˆ6XÏxk(ÈBµ°V'R¼MÃÏÅ®ù¨H°ofrèâF+*‰Ö:i†ÛîD¦ñÕfE–æ‘epÔ=$ÂˆÛNÓáµÁµ¾?<*ŠÖu2wk`OëéşœRy[˜¸åÌ$D}Š÷&›—NÎšÕ$‹Et»¤ß@n-@DH^ÚŠíçqúuK¥³zÅ%H 4­°1qqr|Ïşw†œ’pî!óû8çìV³àíK(ßb|•*ıûeËµ‡`Å£ıYD²¾ávÀ¡wåÄ¥QCî y§UiŠ­_›Ò$gU™Év@ùò øã‚Ô÷Û»šI‹Ğ®ÏÚI‰Z2½¾üœ}Vˆµeìª†f/]I´pÍ*«İA#¶nFà¨œw(o·ŸËn«Ÿ/§¤Zš¨³–$Ø)ºòoöbD/$²$MHÉ+‘Õ·>£ş\KËjZ	¦U}cÆ*Qq´]Íõ-¥†ÓÊ7GÄĞQ+i%×šfˆ®Šœ@PU]„¦ 1{ä/M.SNõ’H´í$„”`±Ç8ÿ V3'†¾¹h•©d!C›)7çq8'‘÷`¤>bÆWG5H}Vë*ÇQXd½¼›¬×Ì‰EñÊtØPA³§@ÆágåQşu“P€;[o›Ğ†…%Îsg*{ÃµZÛVñ•[‹áoÈœÆ×)É«¶ÌĞäypœØ70½Í¤ŞÜØl,ı#ÂšeŸYO,ÚˆÕî@=™Ì4u#BÀÆGÏS•°Ä©f‹k%—vğÖ Ú•¢è B¢vŠ]È+İO­2X’ ÷3—½!]@Wz÷«ºä¡* ¡|ZÜ`Ã-Óy¤åqwaŠ:;3$›FÅMƒ€ìÛ…ü÷\õÃL¨cª¥¶’Ş%†OÎ¶ÅšZÜ%Ú&-Zâ2ÿ ¬2«½Y¹ˆé»¦è;p‘€ó*€%æ¡˜Ïõ¶Ÿ¬¡š–=WORœÃÑ!„IĞ—#Ä¤ËàMÁ¿,[Ã_IX*eÈòèc7Y'nğ¥ú(<ÄCXE¸‡†Ó{<‘ªoP¬e:š©Æ›hiGÎ;B«ˆğWÉj'&Ø¥Îö<ä*… ØLüúdÑæõvUÙ%z6ÙvssèLí`iâWj)AF¦¥ò>	8'
+ë„[aœ´ö»‘äF‹OŠ³İ/26Q²vüš­"mƒ(ücFRu5˜$ò}W-’XŠ…‡l¢®–)ÕH¤CŸ®sGà Õ5HDÜ	g6ôê	ëÓ³*]–%;wso>›¾ôç¦ç¢öDÍ9ƒ%fËÓÚÕ'Sã)¬êU*Ÿ²šyJ=’QOåæ¢ä$JÍ@ÇÑ¦E£A$kY9©’ˆ
+N¥gC+Êš’šz²	$ŸÍócn—=¿ÃŒWG$Ôñ;‚‘_¨êmù£Òç­º pŞµ%¨*>Ã¹{$Ù$æ¨ÑbhòLH”ïrœáÈ PfÑıyÑbÁŠeAÉ¥E2¶En¨VGÌ\G
+O'‹­ SëˆpSñ¦ß³§_Ûó?n0ÁoÁ³ª¼(2\Q*«
+k‚"j‘1f'òO}Ä<õı¤µì/1š w–¯cäOÇ 8fæy1¨Nñ#ésÓÈu+r‘óÅ¦]@©lğ4Œ íSbC=3h«	Ó;§x¥Ô‚â&zš?¬;êU>d &`3„ˆ(A1Ï²:mS¹ÖJ-¨ã	ÀEıÙ€ïé³Xâ¢–g¢µ$ãû— o5>@ş¯í,:œÏ˜!©,¤jVÁJëo‹Ç¹‹]ÜƒgìÌ)ÉÄ?PÅíÉ29£!„»D:X6mUÂP{¢xéë×ÃÌZøµX¡“rÉJ¦eâöûyÀàLĞ¾<›“×ÙJ´*Ïä¬¹«¾ñéãu„r¡]R¨sŠF N;D7ß¢ĞÎÔ”ñ3ÕñĞq*¿gÀşsÃGY9à,mòçß‹ïü–KÓ[&µ]†:"ªQón:¿±jSy”uûS—Ûèµ=‚P| rÛË­Oü¦²óOªò,Á£ OA´—îd#ï³)td’iR!¹’fÛpıö6ÃÔÖtu‚{°’lÑ×ìDºÀõº~ÙD0²v=ã˜…éñ2†1Gs@7ë(ÔÍ³m¿Së‡’*éá*ÀØ2‚<¼şvÂïÁËcúj¨;¦1‘M@””‘^ºÑY§
+,'T®ÌéÉ
+íš¦ 1„ÀmÄßìê=Vdjı¶y’ ˜9¬Z¾ó}:X“~8?xı£œÁCÒ\4#ùùìa Ö:BUšĞòÕXõš?.Ä@¾ÈÇT«!Û(	Ç.Ûõé3:™ÓÙ¢fv!@]åÈİåòÇíÙ’™Då{§qp¼‚9;¬GíÂàÎuM1Û/r“6(§*NBVHÌ—†+_‹È*
+H&‰]¶PRXoî
+sEBø€KÑœÍ3:L­iéçqÕÇº=µ½Ç„Àb¢öˆ!b"6#Êÿ Ç­«x‹OOóHÒIƒ£E˜¸lÅšŠ¢d[¶bÀ4„Û…ÕëçéÔºœî½U{Ç_±co›_åğÇD91Ãı8øşÜm`±ÅV‘µujPã ¢'U&ïá“]ˆAMTÌ ;€ RˆŸq& xèvlÆj©wM4ŒPqub>Î9¾?’'ï(ÿ IÓŠÆØZiæ™È%`©heqî”±C·@
+ÜœLq2@Tí”?o¨~}zï'jI£öy‹5Ç½ùòáqé6¬±9– ƒË âÿ <.ìù"Õöarì®qyU¤<K"
+ºEÅqšÍ )SäG‘ÇMTÄ…™#¼ï¸’et5Qéø·@ÖVu>ºæâÖ½Áàú0S[HsÚ‚³¨)"ì<@‹Ü„#æ:cİI]¹L2­H™
+—"Êe(Oê€ÊÀR ˜Cc†ãĞN}¾%XŸw?š~ß,0r.í˜?´FÓpÿ OÏJPH=w¡ˆ—í$<T7)óñ|P0ìzÌšó0h{Å‚èopÁ©ŒŠK_€4ç¥š<[¦¬…Ò,í¦‰SªØ ‚ab qF¶;}:[éjŠJÜŞ«d	n¦ãÏ­Ïöá%­+§£†V€’ãö|~x^öİPhßLş¦^¦Qº‡ÏXßÂ‰¢ªÚ÷êµœ{QÇà»1`00ó|¯¸™`WDW‚‰ÑoïèôoŸvY¢cÒLµñÑÕæ ¬+¼ƒ,·66RH$n+¸‹ávÔYŒ“fŒÑšˆ£`ÍeÜªÒ(`ZÁ€éÅù¸Sş¡y¯Ò×5×ÖÈ0ZÂÅRê2Ì_¶­RşÙÈËdØ$eRBš„IªMœË¤”9ĞDÉ®Æî	À Åó¤û5ír†­V>ÏóÖO	2**ox±{^¼¸%“Vä;©sxZœŞöÜY~@ŸˆbI„=St	¦-4&f„älíe™±Î…õ"HVŒŞ>2¢âB>g¦cB`$®áÁ àP‚¯lÇèª~Ä»c–?n—GHÉ30Fïà>¸÷{İëælÀrx¸ÅMF´ÒUµâš<Ü¦E{©G,/ºûİ8${Û^·õ½¤¬İ†1ÜUCWÔI‰jÚV}¾8Œ{hU…†ZÕ”CÛ¼Óe+Èµ^Z³ßÙ1LqCâTKŒcL“³>Ò =ÌÚ1Tf¯½‡>MÒıG™Ç£¨2¥yk ºØŸ½ß<4fú(À“)Îp^<T‚ºŸ°¡Ê&ß¸C–3D}ü”<u²²şÎ#!áÈÕX@?v>ËÛ§j
+
+ÿ =+­oêÿ ÿ <yİzi”N§¸ÓF#z&0l"'V1
+bƒ"¤ñÀ@@Dwş]YG¡tDave[~7<ü¬F+m}¦Inó[×—woü»ãˆãEÚ{fÁ8øìCMº"(GÇíÄ"Z=ÌI—Ú²1dÍ4„L$M"€~¸uøÚAxŒºzÏÅï÷ßæoéÛ/i²5şcñ;ü¿²Ç¨¡h_OY+T:X©×q> ±tPÄP²Ü"’rÔÇ9	ûzdËöM§œL×XTæ³l«–ËH½9È@P¥8E³nÏóÓ/ôôq˜¥2(Œ²‰o²Hñ"¹å]T’z‡í?_gÌ9fm©ê+2Ú¸Y%
+İÙŒï7m =™KˆWş‡ô,Y«MIåìA¨›D©ÁºÅmmµÅğÂ?O¯dllm@Œª6ç”šÚJÙãÅ¬qË‡mªÜ”  ˜víÆ­4~W¦'Êrj¢ie„Š¨š«»ÚˆË³½”:ØÓSHÑÕg†¶×ÏD"9?J†VfV¸M· í ‚âÜñªÊß¢o§¤Òï!ä,zÂ~ùÃ'K2Mö°r:dœ·DUM§í#Úœïø	ÓP£±€ëÖcnÒ3aŞ,ºs#ŞWñdP@·Ä0kñÀè~8'›(®ˆ$©œÕ÷_œ;É:_=}-Îáè·£˜É…™BS3|Ìs4NcüoP—Ùˆ§!”É~¡1í|xOÇ„GnªfíCY­Ì0e	ÑË©AıªxÁEG‘M5UEi{ÿ Mcÿ {‹ı¸u¹éÏ§8iÊS;Qh¶ö2<„¥$P²_ìv¤VÜåZÃ+cÖ.Ú«ñ˜…;;;‰ræCÀi-u«õ&m>AšÍHhªrÚñµ))ámâf‰ÃÄ‹"”+xX^Ö<b>q•ä9}VĞ¤ËX•TÖfg3Æ®6;”`Tn1	Ëz(Ãs·+êkP¤¦/sï2ÄQ”ûDİ¿¶-ñ‡Û2o6Y±ä ÀDŠ™ ¥óÒãOê]EA”eÔPê	Ò*x–!î”¹qrp×«Ê´ôõu6M»’Ig¹¿Ÿ½kŸ;P:<Óìğ•º@±QYÁ$.I	€J;	ˆŞÚAïÄCéàz»×[@ßÜú¢‘û¯ûñâM1¥¤Ÿ#Bl:<£ûb	5¥}1Ö»)ÅàÊ09p©G¹$µÒIÓ1La)“ZÖ©ˆ òòQ(æ=z:×_VßêÉÌcôc…OıØü¾Ì{‹Ji(<pièÔEŞCı¯}‡`ªívE6WëÈ×¿rh.ÎÊÜLEÊe¦œ“Šô@DßùuWQ˜êzyuM`ø†µ¯éalK‡*Ó´Ò \ŠÏK^¤ıøpzWÒõ¢[õG—Í’ê¶W¹‚Ù‡ jø’ÅM¤S«8÷Ôñõ—Ê=æ<´¿u"œzoUz¢®`0ñ )K¦´¦†ÒZ3JÆtÕ4ÕRĞG4²Jfw’Y‹<Ç½»M€@s„ûBíK\éİsd™NzÉC§`)V$„_
+¼ÉãkrSÑ;DÏÈ)º°ê”å6ÜÓO4TÑ!„pùÄ)”K¸n‡ëÜú_KFà#—<öJ¶lWRvÉÚ+Úú‚ü#ÿ oİ‚…ztrk.®À aEµl%(3ˆ{Ll€—`ümÕ{äºreÒX[€'ö—8¾NÕ{@˜&íS9¹ıQ×ìÅE‚½ô]ñ=>ñfµêİIùàœ<Š±–ab–dfì¦¨’[0h˜Èò>æüöê4#F?øO*R	ö`-Óõ¿8)Õ:ãTå9õv]I¨göHÄvï6»]£V7%A<“kù`
+‘Ò“±¶j©‰qTnhŠÑş¤òŞ<UÆ­“$Úğü‘öZS©JD¼¼d
+Š22D)nW-
+¢á	ó§iUZSDë|äÖ´¹VK›%	d’T¤‚ºZr^7±Û©
+ŒÌ ˜Šw6k<´F{ª5ÓÕm›$Õ(•Mİ:ÂÓ¼Î#^êéfî‰#kmG¹]Ûì	c]Òn†Ç4,×b¦ã».;¼°Ô©Ğ"R|Ú&DæE{¹bœ$âb `eY,ƒ–®RMtÒ*À©9'äÓKÒeÚã>¢Ğ9v[G”kh²™%¥Z‰&s™æz¹}DòR´“Ge§hJÊó:¼“…Î¦ÕúMÒæ™ùÏ«k²$Ì#YÌk-8CSšeXİ¯>òÈ±‚AãùºŞ­Úéb°æ4Nœi˜Ú§ã1MRA­‰ÛïrÚ¿)4ÑÌb’Îÿ İ&åš§QVèÄ!û`Så:
+§3¡Õ”KQA—k,Â‚9hh¥z¨ª²ê˜ÄRÉO3—îašH ¨V‹,o-‹ZE F¿]VÁ.IW=Ne]§©ëİ*j£h^
+ºw/É
+¨ï$Š9$„‰á/cµ±]Ãã:íïÜ²T„†>Æiâé	«riU)JÑ$ŸºŒ©’)³ÚÂj¥:³¢îpr%;³.ÑÃ‰RSÖ[-V–«ÓUº†²|“6OJ±-H’LÁ"4L¼4éug”1µÊ…<²øÍê?Ošåylk˜Q¨’gy"+.ò¦BÍÁ‘Äi`xçã¡8ÜD›1n)µY$Ã™Q)3p1L¡9rOõ6Â ?OÔ«"·Œÿ <ñ…WOTnRÀòOÛo?Ö*$~5ÜåB*¿É2¬òRióH¦IÆ“3É’nEU "&ò<Gm‡¬Yû1ÆÌIBöÏŒw§Ñù–cU_C5El­hâ‰Id>ˆˆ1’m`.M† Ò¸|5HŠi"í˜¸h~ã492K rŸfrš…TVë	Çˆ ®ŸÎtRNûy¸ûşCáåŠ©4ıdR4mNP† „06!®/u ƒèAã
+_ÖG?KÓ·?	cWB:VŠÙ‚EH[ C/yŠj»€ÅMâŠ®=Ã¸ 1Šcì"°u7OæşÓª2ø¢;šb|úÚ3kzXá‰ÙåbêŠ	J2ÒÃãĞZÄœI±-Ï^£¦1ï¡ÌôïJzµÄyeÒª5…k<Z­Ä^@¥NÔ!ôë0IÑ­ÁrLm€J>:»í‡KÉ«ômMDæÔ,*¡»1Œñ®è÷Xò?f5ö‚ÍcÊµ(íGT¦	ìò61ÿ ›%Êøşû¯Ú(¨Iø94Ô8¡úI‚  ö2»bá¸§òˆ¢Q/òå·æ;üïHú\ñ‡$Ğ54•ò¯BC÷bî…·Aß˜È9;`²B¹3‹l>)‚ÈtÙË5ä¡U^eÈ;àT–!‘0€yC²A”uû~GÔŒƒphXY	ÿ Ãép9·[r0®=ZKB‚HÀ);w‰ÕL9«™TòÅ,£¹DÃí×­¸}DÁôÛ£.ÍÂ¦²Ë˜Ÿ§¬·ÿ '9çîÄLñ¯”Iğ’Óúø¼°¾2nAï·tÕÚ‰
+Ñ².9Ä"ñíÜ&RG‚½ÂìPä)ç€,¥Ë }à+\ÛÏ©ê}0ó¨¥î§`­q~p(Z/Æz²FlcŸ“@WU?j*UÜ‘øqY¶`Û şwqD g=qí¤îÒÃ·K»RšpªíŠŞ={J:MÄŠ…í]ƒbM¾Ş@»nøëÊÓ=ãÛ~ñAĞúãŸ| 1µ¶àP»­`UñW‰Å³‚²€¹Zœ¦P©vÜ\»1„Üvñ°oç«W£xâ¹_ì>wøC«L>o3z+›†ˆäÌàŸô²Ô®Éø&ÒtÒ€no˜@ ?;u®ôÚ¯óKG†±ÿ z©şŞ5{c`;NÕ!O=êÿ êÃ„h`ù¼€yú‰„~€`ùu&¢•dà*’rŒ7ë¸{ìã¤ÆoídÈ˜r9Ô**e!D™C m°ï¿T³PH/eºà‚³tÔâöS"~cæ“¡ú§6+d™’=yÄ²(ƒtJWr…D“)J"Š¨}Çó0QeËLSÔ#%ìß¸`ï^f êjÉ{ÀûÕÉ¹@-öX}˜Tt*ôQ3Ÿ¨•âFjõGx–¾rÄ<]ö¶ÉóŠ[– µYÛêBUªå`f³Ò-QUGˆ¸MÚ"™Êe«Öyö‹í3¢Ëô5u”Ôåù[LfE–JI–¢!?pC3@!g"‘*v˜äàµrl‡+ÕZB­V=U:VíTsÌ¦'Ø²Pq(Ğİ]±ıƒØX§7-#&ö±mòR3«5“i77WSŒ–¶S=»fhÍ­e‹)Ú¨UE\‘3Çë‘*Æ§Ï{6í¾—7©Ñ2ÓgÙ<pÆô4ìô¥ã‚TI[³ÃQI"ÄeØÏ,¤,»…ì{mW¦ « §ÔÉCZÎŞ×2%A$ÈL]Õ‚É¨dƒµcS²Ät®¢pŒ•Öµdf²®ZÆª»¨øæè±i8öM)‡"Rà–nÑàÂH¦“7ºI` ;EÛVèeÏr-WUO%^q›ÒÓµTËRÆ&Š=î&@„ÌXBêï	epÈWÙó®¿2ÓñN”¹F]4â6…DÏ†È"bßŠQŞ•\x,
+Ù±WÃ`õ©¶$/O¤­ët×Ñ’ì˜;EŠ4ÄGºlh‹’ŒA<Üœ[©e`åtå!)È‚m%85uÀNÖsVÓóëºaª¤¦îä§Œ ”Õm§¤·Ñ£HnQ‚J¹FtÄÿ Ì,Ÿğ”ZJS“$¬É+dŸ¼RòÔÔÄí*¡ÚÁš;…ô†ÌY·‹Uô˜ƒ4š	@çtMŒtZ¢£‡Êó?‘³&ÅXD
+™CÏ“ñÉ¾E½÷-Ï<X|É6±óã1G §iªQƒ(íë×Èu.z^İN_©F¡°åÿ Cãjúö™IJ†ªñ©m3‘õ·&¯ÕàñåQ½öÛn+Ò¨º3µ,‹Ş”ˆ'ï‡hUDÀåĞ:k9æ•@Cº\šb±Èê¬Zg1Æ¼ÙDŒĞ;¹`«Èçº*a–êÍ3R
+ˆÚ›0„‘ÆìÊ¨Û]mû##°Ûväp,«:¸Á*êz3AĞ‘3dŠæ¤_Ô¶¿^1nî9jLu…¨…¼%‚}f5’y ªH²lŠ»>Ú‚PJ½9›Óij]e#+POVĞ* ÅÑ®À‚€Ò+*‹õèEê³Š:z¼÷Sï±Ì’i&”;å;Â)m…ÆâHP¼‹|«F×é9«ÛÔ­‚Rxlùª*v†¢ÄAº0˜î¯–«UÊe~)#G±:,Ú-iœÀ±^ªÿ Üûƒ¦© 8ézÖ¦íMS¶u}²ÜºÓ³¹bM·İ¶°^Œ,pA§©©âzIb‡mo³?zz–$’oè”Tt<ãùõßZÇ¦èÉ4S»ºŠÔ/mdÖSc‰ÌğÕ~ÙÊ$Ç‡—pß­KßÚ©Ï6ø‘â–â×ëƒt
+M‹Úş¿ôEÖY3vÂsó>ó)â²!F\ƒY¹JºE0CL3YQá2ŠmÈ$TR0.H<È!°õóßµ½ú3XUAJŸï5{4ô§7É	·œLM­Õ8ÒY.i¢È)³Gaí´ê"©|@’\yJ¶ê-¼‡s5ÚAÑ-ÒîOÅv¥“nÇœk¨·¼BVU˜*Œ¬”+şĞÉJ"¡J©
+S:QT²+ŞÁ×‚@àBˆƒçÇÄI…K)¥x‰ù±>+u”Ø¨aä~Ã…%ê	“îËcYê4Ô;Õ`æ¬¸±>‰X²m¸ÌØõë99E>ÓÈA*J™1îòâ&LÀ%èƒ³‰µT¯'ˆÇX ò ĞÔÛïûñ'Qeô±èÌæ®÷‹Ü‘Åå AAøùaFİµ#Uq|·G¾EãlSñß¬L†OÖh™Ôîòp³½ÒØä€ƒ±€¿(^r=7™ƒ*™)Xî‚3Ó­Ô|¾GYy@Ù•Tb V·İÇßëÆ*‰¬ÙöD~ŞI×Ì ‘@†ÀJ c(ª¦1[ÊÂä<‘êõrY’*vF?oÊİM½1^sX]­
+3·ìûÏ­g¥í¶ÅÖ+—ŠNğì1ÅCl¸Wb¢&&À`(ø(ó»À””ª¢$İ/MÖê>ã ª©o’1Í¼ÇÌùÿ f:õÓ5fåENPí" Û˜ÊPICò>ào¹„GÇ\*ÖIU‚‚âU&Ôdó ‹cQ¾ŠÓ‘¢À¤ƒtU>ªµ&àp¹°"¼¥<Ä9· r 6ÆåÖ©Ó·‹KiÊtÊàşÆÇÍîØ£–NÓ5Dªİ™¬^pá™H2†ÏZ˜È\¤qØ~` !Ncˆ×«96ÖÂò5º›üAÅª9ùW8rZ¡Gº©rÈ’,*V8· ›Ø–Šˆ¿³=l±?ªQ8fæ ìbŠß)Šm‡©ù=<^’TB%¦‰K²‡ÉGı¯`³JLÚ*ÊÊNò’™LŒ­Ñ›¢ûFş†Şx};lËÔcdq½‹ ¼Ÿœ¢Ä_¨M¥É»4Pa79	u<0¦
+H»+i& 
+¨ác€ò/€‰ŒkS—ÆÒût‹‰š7µï{)MÀØ©òF;F•ëYŒTÁgŠ^îR:ê­ü­Í‡ÒØäaµì‘V½]Ú«Õk=ê	©ÓËIö"ßÃ8M	ŠÅy±×c$ÁÁ¹feùmfü0Íç¬¥¯4¡Ôİ¬æÔ:AœjÓÄsMO)¤"a+$ÈË”e^äÈ.µ–!d6kiŒç#Ë;3Ò’êPO-D	®Œ€©ìà‘&ËŞ%{€T_šÖ£h–Z2Ír„tâBYE”VUA„t‹æH«$Ê"²»ÈÄåÁ6§lsr;2.EG=®@#u’~ĞÙYšöˆ»2JÜÚXjòúª 3:áLbŒÍie•İP•*²@5 b.q&Q«3*úmNòæô´15=e=G÷,“÷İ1Üc¶6…Ú1m½Ù âÔ^ÉuÇøÚ×Xfª “´VŠH¿‹yÄ^ºtÆ%Óm‹èWm‰›™')¨"u@^=h¿+ìc\jÍê$«lš f’†„¢¤u)#î´†ûeYD¥b!âš;„f„Å|İ¤é¼“W†3i­TÕnbĞ2.İÛA£)³s¯¶g âW!"Â&·ªhº<ÃÇN#¡ŸHÙkÅzÒ)7¨û¤X§%öíG‘u:pì*¢nsª^"—*JİgÚi®r¼Ö’U‚jçJZ¸ãzˆ7È‹#ÊÅ™|jRáÖñ4j€Ù j&¦ÓZZ“MVQÊ$TÑ™àr"œ*;"ª…­fg
+A!÷_­c?dÔÑc`n¹çFU´•~Í?Æ>ÍñU•pÁ©İ)b¯Í³wíÜ±Ø¬™Q8r7õf­É59E¨ª€S×Ã¨,»¯á$e6ñ+eİá668å.—Óµ)
+!ºØ7âö$òcäMˆã	¹MUÖ²<¶-±c—sÏè?4ÁdŒY-jÉ"ëjÁJÇºa=cŸÊç*`»éÃ?U¢EL©¨ŠmHû`iø(²üås:x#|¾”¤âGö£Z«gB\”Œ#0hv€„3†ñpëI–gùNe¦j$‹8ÈŒR˜J ë¹FéI»w€:‘`1q©­jëÔ:ï9ÂÅ[µ2µRÇu[<|[ukUšº¯VWJÁn„©^-5×¯¨æÍgÉ®Š$nÓÚ¶c‘Õe½—å²A]2ĞÒ¼Eç‘Ü®õ°%ÑPˆ£Ø½e‘·µ±M]#Q›€’S%·~€[,¶ÜØ–İr,¢×8)½Zõ¹ˆ­Ú(ÎÚze	TûC`©U™ÕO^ÌúnE¡*S0¶9·O±üK°ˆ|‰c7øY@åj°Q05L‡2CKR×AÚgÊ*ı‰ª‰½AÖK?~Ş¤¶Õ=]Ş¸ceZuã‚»8lÎ”•‡qMÇ¾fr.yİÀsŒ(Ù\%Ù9n™‘|¾Ì¾e	Í»c,fò
+UEFän+s—åüŞx€ì8G
+™bRŒ@lBò­Öö ùG–'/½ÇLY:XÔ·MYŠ½“êGlÑv‡Zi»•„d´3ó‘'ÑnÒIÁPıJ‰(šœD #Ò×´ÍEÚ™©É¤„GšFKÓH/uG
+/{«ÔOS>šÎb©”oËeÜéäÑŸÎ·éFlÊ~Ìo÷
+j2ƒŸğ…*É_T]KÊ7jíë¤Ôp»ğ3èõD•Õ‘ÃµV4PİÅˆ¡Á>f)DGçoy
+O•ÖÒ²g4Ó2H;®·m~GİÔùaûU•IK\ja”>U,aãàX©±ŞO¸6ÛÓ‚zà`×lZ„ÓNN]f­HHüp¡İµ8;gÈæªÂ¶Urr$Ì§íŠ‰ˆ¥Ï®{5İ¢i(	ŒÒ§E©ªŞœ^Ş˜©ÕL«¤5†70†ç‹ª¼fş¼ÚüØÚÇ	/>'Úê#ÕÂ¡h™:.}«¬$;÷jª  U•7Ä@Ş 6ßqÛ®O¼F\‹PÊ`ZæÜqë†^sİµd²5:›€G„yçkàZ*¡×+^DÛ€Q&ÇÛ}ÁËúÃíà  `óÑk ØÍqüyâ>íšáGü|1û;€"
+&™Nb!
+ C€—Æ F0òú€¹*ÜÏaà	±'9…şùóƒª‰3táS@
+TÒHâÈ~ï„èóêÚ•L©‹Ü€>Ókß«$ZeßùİÕ†ÿ  œû•ñ•ÆøŒ„LNlÈ’LT°.æì¼9¨÷¤TaúDŒ¿9JİT{Şè
+;”›yÖZb+ŸKé™j^oj|vÚ !Ùº×$Èı,qµF—¥Îõ¡Ì'oz‡€|/[z˜c­óTªm,È’âGFpà=Ûê•®£WÆ‰tñFR*ºNp™ITlÔ@è*N&È!µÄE=lÌ¬³Ó¨kmWG¿æ‹ZÖ%î[àIô8©˜Dã¸º¸Ep9ò°^-g<q×­²†[ËVÌ`UÖ2ÅHãRd`mëÈÁ+8f'"êÄÚ-Ã†-×pÅïrQËpá£$ÊP%ä'Úb]?“Ó=xdÌ÷Z5¹æÁc7¹Qoì	øß96YK‘Ã-`IXÀI%ĞïÚ|"ÊEÂxoÔó,‹›f¢±çÙLi¨¡+31]¸Ì¿ƒV5dÉ ‹¸s<‹;ÏÄâˆ.Ö‹;ò,ÄRO’ê@–•´9³fèõp´R’mu¾öóz ØØğêÖjµ±?q5$¤ F]¯À·SË•>é·„õ±ãî¾W¬s[7O8#V#XZÌwZc(Îåb¿Oåêz4ú–1¢(·º”´Øœ6ì{B˜7`S*åtÛ¦¹‹†;l¤Ïj;U¢ÒÚviÆ]˜ÑåĞÔw^"Ñ"JU¥uî¢p$€g1(¹{`çDÇ“éí;YUš ’§(EÈ”“À’E%nx7›pZÔm³4Zãw‹½“l°X½ŒFŒ¥#«©Z&XÜyX1…8«æ‰6UõE4 Ò®e@JÉâ+îÑ»GÊ3ŒãMè|›ºÎ»>É¨äy«RwMõ$Ÿh’9­É¦'ºxRÕ‡@ˆQvşém7WY¦¦¬²ÍI˜L¯%ÂBœD·6‚?y6$–-{V^1cÏÍ“ìÈ"êNbÏÑš§tSÔâš®œˆ<jøä+ùd[•Û—\¯g°@*†Ü«|ë4§É5æ’ÓÑµlùO—ÓQ´õcjÔV;¤á"÷À§0=9Œ€DH¥UÁÅNLµ9ÆQ¨37‚hkª'R(@h·7AŞ‰RÃ÷SÈÀŞöq»çRÖµ×«IÌÑBÑRšcåšóò¾Å‚‹µkîH‘2¹ ” b×(?“¾¦¯:Ó‘f:wKÉK[EOš%‰•gxègvi¦YC¾ÈY¥1T+ø$@’íÀE<9vp2üÛ7I¡¬š‡¼·´@ÕD¡Q]ò¢¦øJÊÌÈ­±y©JÅÂÌ6g¡Óa{jŒ‰}í¨M¼’ˆxÊUĞÏƒ³)‹÷	,á§tUàˆ†æ(t«¢Òô±MO,ú²
+hUĞ°!¦'i”w`u Ø‘·‘/–4ãñWrI,‹qºæÌGöyà9ÒÖÈ82OÒ—+ä{vRÆ™¯&KŞ¥Ïa\DÌá\Œa¨ìÚCÈ/*WêY*6³)†ŒÔ!šÏvCÌÍaÚ%>uU«éSQôı}	ı¶ÔÓÔ4Àº„°Uw†B¼²„&û@²İ'_L#’šqXK¸f /7àqbzÙ:š~zÈ:ïªê2F×´0ªš`l„t"¹&ä	‡Ñe´Ü3–0­]B¶Œ3¦„;‰	„[rŠÏÔ:uùGi:;Oèt’çõæ5µíSµ-CÃ…;a§R…Èª™äap1Ş»@jlÎ¢’«½‹tcƒíqÇ!#•ã’¤ğnM…‡L}5±¤:&¤iz½à_NL‡³|v+È¹'->¤Áã÷r„öI„±sÎÛY-—XÇÊf¤L
+Í2(<Q@Ú_µúƒWéæ­×õ§³Ø*Qê©Z*™#HVê²01ê8¥hØ<ª÷¹İ6”¨ƒ)xj²úGÍÚ!J%€ÊÒ›…Ag±·­Œ¢Èè‡U)71l¥ÚKT:Š¸°@7«Û!ˆåB¿{Uœ
+…â¯’‘DŒ€˜¡¾¨=µvaİ¡%’äİ`ªaÏüØÏPz>X¯KS’Êë$+ûL¸Åé4½›ASéA7"¤ˆY1äú­ÊÕ™¢€Nÿ írr¦‚Š•B¨ `Üñ;aìş¦­$“:ª şreù„„ÒÊ´À yéÎ:K¥µL´‰•ÀeàzºXçŸ…·^A¿L1Ï³Ñsi*¬Äª‹+ I”jfÔF ®¹P©®ÙsGJæåš¹2Û˜€^ `Ø@zÏ=¦i½¯sXóÌ“7¯ Í™†O™:ÏÏB@„8µø##©³|ƒ*—*Î²ŠjêTaÜŸÂŠĞŞ÷K³5ÔE¹,5î®²v¸İChÚ™€©öË¨ÉJö8»Úõ[‡g«µG!c„µ)(¼dÎÉ‚iV›VDÎ]¹Y4R(r”C´ïg´:S>Éu*ç9¥d”SïXW&¬ƒ¿b®‹}9H¡Vg¥”ˆâP]¸ıÔZµól—9Ë[I
+Ô@T¹Ì)ädäx»¸Ái·¾&=<ñÊÊ1V{%®Ş´Æò¬<«úNÔ,}Qv«¾‘tÁÂE/ÚE3~áU9@CÁ|‡HÚ
+êzzJe1§Ùn„È
+ƒÏèrAº:‡|U1ÉµÚ’vŒ¢Ø…¸nB	ë×åñÀimÆ×@‘i‹ìè(c¨ ûÉz4b©˜J^ĞÙN¯”Àå.åú"¦Ï`Ue“2„[ÊÒµşĞ–ûøÇ™ãFkÅ•Õó×À£í±?ÙÎ!‰âŒœaGÉ1T €[(y”à®ê} Øà˜Ûâ&öêIÏ(H WGksá—ö—ûq¹¨äŒº¤ù£ï½í÷âŠÍ4œú=*Ä\EN
+RĞñ¥^,ÖÌŸ [¸œ°¹F	¯a2‘Ô‹ÔŠ~F)Hä~½h\Ï(„u5×Q>2´ô•¹Dñ=•şèããÎ5i¬‘D°³¡¦–8…Ï–o_NpÅœb\ß¥É|í§ØÍ#ä<½œ+Y€ÑMs4Œ$¬5# jŒáŠÂ¢31“¶mU„"Í9 «¸r TÒ8•×’v×Ù†Y•d‘gúş‡*¯†Òj:ò)cu•ûÈä=Û*˜Ë*±Œµ‰°÷°Š“Mê‰§ª²|¹Ø¼ovQÃ…!®Î­×¤äF*E–Õl£œ~É¶„s6LœÅ«u¿U¬WAÌ©Î¾°ZdëÓ²£d·U&7íVP€€€(W&Y	Jİ¼ö;xGjyDFfSÌ³0-Å‘wÂ,®<$E#E¥óúi¥§1Mîîa° ‹­™Ûj·‚ùô¶.<äMEd:*Ãhzsk6‰
+Ó!´·¾—ªNU	?`ÈSxä’RUÚİ&Îœë‘Ì/´r.SYDÊÍOv–ÿ «Lğ›¶È2ìÎ®®~ÔrŠ¡ì¢û’hû¥kÜ©¾ÓÅÈÍÜÄz|ŸYæ5•y¤Ú}£•FÛG,d{:9[»+‚›Y€¸"ø¯©4ÍeÒèÖØúvŒµ‹5]¬}£±ÌŞ^ãHÒÕ¬v%â,×§7)r"nX¶'"
+È®Â²M ¸×»(­ªZš>Ñ²ëxŒÌÃbŠWtW{î³\Û›pA>g
+|ÏJ<³ÈÛc,QœBªíe!‚ğOºXôbøçTWEšmÓ#=L²£)«y9=Mfrb¦ù¾¬{–ñ–©îĞ÷
+ƒËSK4À´½ez#Vê§ ª®äšB´7<0Šÿ ?¯×9ö½Ñºã³\®,ÇG!ª$–•¤J“KŞC@chÌ—¨‚FM²Í š¸²œáÕù^}]ø>±ƒ$(²„1´›‘™UÁBªb™C]VKÜµÆ<¾±¸nû¦%ÒfZÆ1¶ºˆ	—hŠYR¿ÎÃ:®ÀJ4ny7QM¢jPJûBœÇEÖì
+1vsÚ-V§ªÕ9Zş×5w´IeôñSÎMHšfš êê¸’BáŠLŠk´˜™S&EK•şÉª¡9x…cU’­Ë¥¡Ùá˜Fl‹Ú *A°µ±+±zÆh©Üµ)VQ£ÅB/&¼òï²Ş<nİÚRåÙ9fÂGJ7¥eL‘Ì İàìq0U´İ•öã->¨öÜÀÉ<ò¼”qÌ›Òy<,\±d{§wwi®®¶$ú9¶Ÿ‚lµ £™@I™.Œè P´ŒçŞ!T…­ÚØ®^¤”•j³ú9ôµ*a`™’kŒ¥êÍ¥)TİÒ‘«}šz,_‚F9UÔ.Ş6yé%¨2]I¯)¡Ôu1BÕ„0úeŒC:FUÑ^’XÒ'…YÈ{8±ÀvbÌ2ItİD1I’Ã#Šq²×Œ·y½Ã2ÔÄÍ"ÈêÅ%B¥B5ÆİsBºjz€¹{ƒ1ï¶!¸*êD–Še„NÃfã4²ÎÜ•æ$!v)|˜Cpİ…šëEŒŞ2Š>
+£ì<`6‡2–å«eò,y¿ xó!¢8Ö¼f;KÑWo¤û¥õî6bÏ”ª“yJ2á!Py"k­•Èf>ù¸Pvc®PI1.«{E®ZøaÛÙ»·ÜëÑ]v¤k°<éƒúM;)Óù„Õ¾ÑF—$>Ò¼§ª†°ktcëƒN/@:*nˆ?•Ò0•Fì%"×İ”¬¢ûgM¼ˆÈ©Ëÿ æ¨róXë"Sˆ0unÑkÑ{Ù36P:€@°õ½¸şß\WŒ¦âìä8'ø¿Ç Gª6“°6¬ésbŠf-Ví­<!AÈhiX+¬oªÊu¶Ó-QÑóbIºM „LòP¯Ád](¹D€N­r}k[U>aõìåhÚ@ˆµœqu"ÿ >Ür)õîÛDZæÀ?˜ë†ô¦„´XI³Ò>›˜&dšÅ¹W
+ãçËé;ì ‰87d+6-€İ–?XeîÀR:¸ÎZ¤½FÇáH•îO™ê<¼º¸›.xâ¶éíÁ¿'ËŸ+scæzánz«`]9Sq–ñC`¸™l³œ’~•3bêÜûÚ:d¥^ÍËÇÖãå¡*$·XZ1AAT^U4
+söJ°t;«õt™dÆşpk“4ÛË*–U@¥PKÜ%AnCC²=-¹ÍmUm}M@)`
+©v·ïç• ?8œG=±Ş¯Üõ…§i*æ"´×­”ìI‚œÆ4	W”ğˆuZ²Ù+ÒÎ`_çl¢,.ÅªÙª¦D9Jª€#šgUçÙI”Ö×æs¤µ´Ë!4¤‰Sp’=Ïf
+ªC-À,¼Ûn{TÓtm%4´q¬PJñ¹E
+»_Å²òà›H ôb>¡¸ê­¥´%ci”È75RèjÄƒÈJ]Z	Ãš¾ÃeEÛwQQETÎè¦)ˆoî:3ÊóJ§ª¬CVåÚ†²À¹n}’R:œ_ã…M.^”ÒÇ ‹£¯öó ôÆq²cÄİòr=m“2:'THP2Ù¤TQáÕ(™B™RˆÂ&yƒ¬©B‹5,î€ÈÈ^Ü±?´ãè@-)IÏ§„tÅNÅÉØ¥ÎáÊ)»jªçMrs20ˆ‰Î%)¶mòíä?¯V®ÉFÀ/æÎP–’RÇç‰vR§BTëoEtbĞ]«m•TÉ"ÙºmS›š‹œ
+VœD¼„wâÏ¯tjd– ±’ÌÀ.XúÔü"ÉVÆ9X5”çk|ÏKyÜœfßQ÷¸ËÌ…‘80EJôK)dÙ8*(I;MªÅZD  Vè˜­ü°©ù‡[³³m)Q¦ra5te3j˜ÁpÑ!÷SÏ#—çÈã'ëI}™<T¯»-€§ü#ô./ù ğ¼Ÿ<lC%j?)['u2e—Nc_Är¨d÷´YCd;Ÿ±&Áêd‹}jú‚NMzËÛ³•µ›ÙÉ0í©]¬¡j<5ŸÈ[[fÙ­,İª*3YÌ”ìêÔé_U-GpzE!Ë¼€Æ´x›Ì–Š¢—OæQ»Š5…T öf.¼]$u,°.ÁÁIŠ1U×éGH©7BÉÚM²F»u©Yeš·K\êù·‡ql6.z›r?J×ZrÚÔùI¦ˆFFÇ30 e5PSDê<ş2×¹­R<uúo0ªˆ?yt±ˆŞ	+%2¯Ñ4RL^Bİv¶.iã‡8uË£˜!GÑ¹²*«©i¤˜^è·	µnÅÈÜ Zå‘‚fŞí7Ùèºş9Ò¾	ÃNjZÕ"ÓšÜÕ…›ãA¸0#È´m0UD«ÑÒM—AS$U(€ö
+DñåbaÒ¹2ÒĞšˆóÂ²3°1=Å=^îîW‡É$l¶è¾.¬N(sZjµÉå  BÙlæˆ<-.Òx,vpáAaÖÅwXbÏÔ6F­VÕjƒƒ(Ï,öìã‚.ÕË„³øºåHcïï`XOG[Ü7‰š3Æåpé‰“rÊ]Ëæ -–73Èµ<9üù¥E=-aîê	F† Öwv-Ş)k’Wò
+÷¬›JI6a$°û5JK]ŞD6 ïï€[Ø¨†à6ã!:¯Âoµ;¬Ìu‘$"b2?--TQzË2Vë%oK®£\
+ô9Vv«H´•¡J'TşáÌ A0 nm%ª':²læ›ûæP’Ş?e“p6qmäO01"PÍœêyV6z*™ÁÛñƒñhÜ°C“qkX[
+³ âLµƒšA­nÍ:²±¬¦k’@î5iPİB=1JU;Ÿ9{…,]Ä‚a(‡MŠß%ÔQì!R±â®-Çé(ékñaÓÌ`vZ¡±ì?Ğqû¢ZE”ºêG:”‰ˆ"
+=`íèºÀÆ*	•@&ÉÂv(˜â;x(u_™=:¤tsKÔNÄ%‡¼@¹·Èy›[çôùUl°ÔÕÓÂLp(gao$;Ü‹ÏÙ†=,•Èúl­Š®³¨dÒJ-wgM?l¡Š*ûpWŠœSp ˆ”G‘¶Ûóèz*·J´‚@ö·AŠÊ¼¹Ú-Ò)ùúüqª¸Tiìºa—Õ‚2nñ%B>ğ¹cd#^Q-ö©: %ò2.ö„)§¬1‘v.ĞıD‘è¦S«×Rfµ5´´)qQ+ Àñ»a _ÂTsqê1mG£ê©ëV‚JtZ…
+K{ÁCn
+ÆÃ€JÜx9b3eµkœõ'şœ.çâ£â×ÔL‚6»,­VùSeú!}FN"VÉ|§ãÁEXêŠ"öN%0NAúEXà`“¨º“VÒå™E^Ó‘VhÖV;¡*ÎÕ,ËÍ¶Ü¬o$ªn…6aİ–h‰ëè+(©è­“F…X;ÅÛ)2BC;’H‘&Í¬²o¶6'ª\“IÆ:<ÌyÂ%K4u|˜Ò^£$ÚU•zÌéC™«1«-ŒÄbÅmhbIÛFk ª‡6É™0Üv—QBÉ:ÂÛo±^Q´¥­k-Ç†şğ6æø^äšjz¼û-¡CiÙ XË…ÚJµößÂXœŞ¹´gƒ4•<Õs<Cú}à'd’2Ñ¯•M" ¹%Ss¼zŸbå8·8·Å/ÊRìÈĞùü5™hË&íù{ÈyVSÂÁ€±ÜŒ½8ãÔ`J£'x]á•u,Œ¤e7e ƒÈ³)<úáïM³Šg+f•÷Œm+`œqİDª7kGòò-öK¸š¬!í$!È7Ø¢ÇªØ5DT´«4ÂV BŞFàq±6¨"ş#¶ÜT”ÌñEJd¨QñrGÚÇîç¦2—iÈ¨êw8Yóú2AÍ¶bN‹H‰Û­ŒqƒSÉ/R¥V‰"Õ8Xˆ¤ğÎ¤×Y7ä¤(c˜G
+_­³zƒø‰ ‚…
+º™%XØ\€½I°$‹q§2ı•é¼¾X·5BÆ•S#³·^£¢Ê:’EñTÛfÙÔ­xâÿ ‰T±ãŒÃŠl$a²„C«O’‰øjí§«ìX¨ú<.ª.Œá0`ş1ÉÛ*ØÅé¬æºj3$5¹]LR5íP’0Å¹uo %ÉQÑøRªN*sŒšq-=u@¦uPwDA*­ˆçA>¼áşëÜß$úcËeÖíHÓí4xtÕ6âÙ(ÙØMS`ç¶àlcÙü:M“‚<‘HJQ Û¦®•fª©¤HJ«†µÒôÓ«)ÚYw‹X‘b§«:Ë?×WÑ	•û‰€V^Œ»F Ø©Eï|c†½’^îùNm+5IæÄFq-m™J‹ru©±ÎXc¦g´NŸ’‰ŠnØ€†á¸®»OO‘Òåô²RNi¢&èlF¬.zt#¯-Ôf$ÃF@ –uû-ö`º¨Â²øtdµŒŠ‰ ¢î¶GûY=G·å¹5]Ãs"pTL)Šf.Âa†¤=ãw’Å)QÀMÅ½Göu¾.™‘”7‰‡>]?,-PŒÒúĞÉ@µc4’x´xä‹!òT@¾jÔT[ÛSJÉ®«Q¥•ùÁâš^ õ¡»ÑÑ
+ˆµ®sAT`Œ·±Æab­cQs`B_l#«=ß¢Œ&»MÕ`E6—ÊåÜRû¬UÀêİe'¢Ùz“„Ó~Ç’ÕºDÜÛéú#¦Ã`øs	¹¤Õ‘j©[5Z-‚GUÊCÍCJDÊS ›qëQÇšÅRíST«Y¼O"x|÷7[ô’xõÂ1¡1¡;Óhµùû¼±½<9€)Rz¶²æ¸7V&ÙÏÒñ¾;§2u7K˜¦iw`«%²$ÄÓ•¹w’LŞDÀÆ ›jÆç†9ø“¯‹ı³k
+è³i“d)²|şJ©æ.©<uY›ÏŒLadYf‘šT’Ë|hì±jGdÕTÍU-$hC_”,NèÁ¸¬.ÂÀ@İ‚*uÍ_$j‹8YUÔ\<—ƒ°]w¬¼Qdg«x
+>×•sCxDÒ–nâ>j×%pI%!rú-Â¨&S¢Q )W;z=“dï¦göZgª¬–¤FÄG-[GMDÌJ1Bb%â~0-öî¹³£Ê«2Ü«*™2flÊ#4¬ÌIAßº¢§‡m«åÄew1ã¸h—æù,è»û¥Âí–´ûˆr¥±Ws“îÓtŒ¥ísRL“u)1R¢Ù£2Š¢)–>)cG[õU—ê|æ§?Ë)2€‘’z˜à%D«øœF­àI%WpÇ—t^ª²Y³<÷%›":,²²®tb
+Å<n€<n$Böä4¡|*PoRàpİtçC”¢ßÚåT°ÓUzÍVcs‹­d6oV$…m”Ê³µ¶øÚq(G­İƒ‰”œ:nfâ˜ÅO£+õ>œÕú–‰ }5Y¶YÌÑ€Gw*ô»ã’@a—vÆ¤
+àï]ø‰£ò<Œi]#WŸÚmBUìÍNB‡§~7Jª|aäVB®6º/m°£5i‡æ²G©ß¨;8”ß¶…ŠËµdÊ1ÌŒ‚jAbrFÓ9E¥UU0:Ê(Sp1Š;ôëËu—ì£±"”K ÉX"´U‘«jÔ³f]‡ ÷·tÇËt,š»,Õ¹`ÙNÕ¤oX÷°tDqô­¾íÈàÈÅa¨MÚíZDym§Êº]ÔÙŒíŠª¹
+şRb4 î7‰ c¼®¸…L¢øP…÷­ÄÜ¸qºgµèiµšÑ=9˜J† …@`PÚÒ|kìk_®	sËèQ*æ{ï»²ªìÇx$ãÄ<ØÛnÒM¹v –J…Wª±Ö%•ûrU'K*èˆÆ{9ğ_:­Ş¸U &  AØÃPëêÚüÇLTeT5%ä©x‰)îx÷!ºª²¶RA½¶òmˆY^‘ÓyF[ªi3íI—öU‘Ï,mÑ••\db7B/ÔŞöÅ«iÓŞE.2g¥BNOCÂ™HùèD+³LÊÅû'ÛH-Yæ+¿]‚ÎHeQ)æ™Œ¢*œ
+b[ŸF3	¨s^¡€*Ïo›•åI Á¸³$slº™a‚¢“3¦ª‰¸¹Rˆ*@ ´Ğ›bª}­T¬Ú].®Şm	IÕ3>N…‘h$¸/^¢ÈQgß³¶Úå_Ùä1ô¥vU(òC¢Ìœ¹váA1P(4Ú+Tåº’OÃeÚ&±Z/i¥ªî¥©šF^â=±¨†)cÚóîº‰
+BŠw)éOŸè¬Ê—ğK_Y¼¤§³ASLæ:zxß¼‘¶–ß4rX]Îó¼…”«<5Y<M§Ìg&­ƒİ/L²ÕŸ!²Ç7êÒ.;6ˆªäXú¥òcdíL(Ó²$^B>X]%6šMÑnİ±›$'ÎÎ±Ì;FÕtM•j-4ùDoWMUuM?2ODõr‡Jw«‰
+Å41iI%=Œ²˜´lz7NÔÑê=9Y©’¾Z®âX§Ëéå”Š¦j‘µê3¾ùu‘jB,if8ÃºÈÖ­/`3i~Û–1sxŒ<î.ñ$fŸdœ…~q”&l«HÚ¥’½7^~­
+Z¬ŠQõõØ¾eÁ«aïµhŠ#Õ>ƒ¦×mI_5gÙ“SDõIG(‘‰ãhİ!m³wÂ@ÄFg=ø³FÏ
+£_íI•v}“ç•µÙŸiYdYµY‡Ú!cQıÍİ´m"dHÍİ·½3Ñ¶Ècœñµé‘s¾=ŸôÀÓÆ&„ÈÍò$SÔ"7$V,ŒSÉ«çÅõ·€İûãÚòa[,à9\©¤Í{fm™ªc€QÙ^{U§Ô3;Ê/ÍàËš¡©¤Zpğ¬©{Şšfh#Ä•UµÓÄş2@Wv±ITríw–TÇUÕ*Ó,é#8¨™LÂ>å$U¨}¨–’Yİ1²]@'GšÑÕÑ²ÈÍâœ!jiQzşB3)d(å²Ò	á] F§,£egÓŞ,’¡ í 4ZL¿ªMb¶1„ùÛWö×KU_WCV¦–òFfE.%PÖ,;¸¶›—cøË‚Š«{öuØ…VG6u®ic1UW¦¦c¹¡u±i'Øe]‘¾á¹`_¢ímC"Ü’aÚ-$“F‡qÙ«VªÊ¦Á»&K™³„[”ç"æäpÛæ0øè2›\–©®’c¶Æ8İ	#ƒ#M4j×6,I½”`÷4¥"G)Rş`ÇşÈ$ytøc„ù’3/^ æàI”%YG·šrÙ9cHEÈójÑTåßÃ¯(eÖ:ÍÀ0ˆ€âcJÓ£&Ïõ_YEÙÌ‘RI–ìP4­nígXÂíß¹·pà“…İ]^í$2g -î>˜‹|xàƒa´[Ë[İ«'â]-eÊ~iKVÉÉceíUY7Ï_7§Ê7ÍØÕôÊ@R39(çÍU*¢bpxO+”Ç)LWçešê¿1ÕC,«Éj(jföˆyİ´3#A+Fñ”M²p¼í¹^Tğ²íKe³iêÜÅj¢’jd#(+ ±PQËF»ã7½¸°±İ `İXãÌ;y®dÌ_1fó¾|®Ç¼€‹¤ÊÈÎòùWY[Ç>—kdM'z¾­µ…pôíı°A<tPÀ%IGÎ¬ìî»R
+
+ì³3*N_JÌ½ªHˆË)u ~ñV÷.‹pØ(²Fr†–še~ç¿{m·
+Ìlm{Ø¿8½ğjåÏSì}E¤(­ƒ!åLQ”íXŠgº˜ÇØ®;#-„óœ4)lu;F9A*yßÔß¨ª¬ÑIœ[µK6p²¦LN^”úk±\ã<ÍŞ4ËéæÈéªVVï&h=¦i1#4'ãmâ>5@¾³_K–e¶Šmµ³# oîøåØ\_mî ›±µ†~QÁš€ÉyvO"Ğôİ3IÌy=GâVíË§ÙÙšÅ>Ã‹éÕ¹¼ı•Ú0µÇ@Qå-¿-Œê¬à¥,s	ÇÇrPª´QŸé¬§&*¯ÔñM._Iì3ÛÛãFJ:`c-*Å´Ó´°«É4’[‚SÓÖTUI4tÌ;×2);	³(Wç‚×,;FLàÜ»tç‘-Y7[kXé”L]vÁa‡²vç!$ö¹UosŸµRÓ¯)N˜BÕö °¤tH‹ l¹nrmC”æYìYFmO6fÂWtF2Æ¨;˜ÕSlp¿y‚U«ŞÌLÕ£OK<4’4ñ0€ "ÌMìnXXî\~mˆÕ®SNéjË‰Ä÷©%,ŒgT„q&á›<]”ôŒâeòEïÛª™|öF8©Å°_s*Õu
+n¾Jk*Œ¿'ÖÊUsªöZ¼èH’2‚ÏWO[¼SÁÍç½qÑ¯Å±¦´=3i9YU0EF„ñïÛ~Å ßlIœIŠã<òW¨#LïMhÁHœDö²s/"‰Ú»Qsçñ1Ÿ˜†)Yò-ÊEÄ’âdGÛÇÁäùU(t¨5îw’öA.Š¬fV¯†ğş:ª*Öê#§Íâ’}§Ü80¬yé4úGT-W*È| ³øB’v¢D‡jïmÜáªÙŠÖ# ÈåúüM)Ié¬ƒ±KG8YÜYBX+ò“‚’Ç*®˜ÖnR*É‚f]Ëa˜ê˜€\õ&i_W“PårÊÉCGOW3m&WØêŞ¤;B¨nl/Â‹›Òd”@ÒK–UÔVxèj'ep,âAÏ;¤@Åzì6ã7¾£05›¨ö¦,­kìJ»56¾W±ª¬ğÒiÕ:‚L¥÷Œºd“râ1M );ÀD æ>û;²İE›GØ¾”¥›3-ŞC<–6P¢W™J©%QK5Ø’7l
+ô¶D†=;5LŞ÷Q“~¤3ïµAvÜXüpCXµ<L¯Mmäk|*³xû)edœäHÀº–4œ`|J²LûÛ(ÊÊi¿TVj§ùãµˆU€‚fèK<Ğù·h]‘ö	O§¦)œĞi·håGSıòÌA`›·K»`¾ŒÁÍØ`§²•Ó™V›×¹q›ş¨SÔw2¶í‰h`Qr ªÒÍ}ÂöéËdÇxûM	Wc„²œô£l¿WŠ“º0Vï/Àì”=>Q—q½~~ZdœtQ+#œLâ™ÄÆA6µ×ÙMFYA©è$£Í(ê#Ú‘e•¼Âıò…•ã;I;šå@Åe_¨©è*kó­;—OMO%¢–cÃ2ƒwbªd§Hàıd$\Îµr†b¶Öt}¦=»]k·|‘¬p6»„•I¸(úúp´3Ø¦œØ›–jIØ¬´»ÄAâÉ5pŠíÒPL'_Ats¨ÉçÌ©ªÖX;¨Y<•X[¼Fb8ÔÆZU]äî#ÄN3¤™K£µ¢Ì³,¶š¦¢=ôí4Òò?x^T(FNV+ b”†Ğ²«8Å£\×b Y©4×3W¬uu·åÖRí+ŠÌ¬İœ´`Ûä¥ÏbJ&ìÉ¬V²~å’'*mÈæ`>k˜W½L9~X)¼Q´$I‰”ı"Rv2E¾<°ÅC×ökIY‘ÔŒîIŞ¦a¯…häM*ÓT!+¶}ŞìÛ6“ºåq¹‹Br,a¾Ç°­ë3	¥X‚q“-ÖETu‰+q“zî"RÄÒZÊéÈózÙà"«²‰7K®O%-Va.¨™³(§y‚š$;ı™d*<0Éeˆ†iûwáÈ*)©En•ˆå•İ$ræU3{ƒ»ö‚æ*»£”m¶±:‰v€µécÖòÆ.ÃVŠ;~HwEg”n˜¢úGPÄ±‘m­ÿ cUŒaA6Rì\9*òMÉÀ6"š¤Èó—µíu™é[ÒêF¢¢ZÉ‚š¾”‰–GŒÖÓ
+‘"J.ÒSËe"¦-ŸyKåfÊs¾ÏtRêm’Ôd{çöT‚¾¢ŠXÌoîiš˜‹7ÑÔ	Yj›1'†Z­£lQ%N²Ğñş á¬7(Ç‘Œo§kä}„£«.æZ;qk\NDİ·zõQMã zD€È®‰Då“K¬k©sÌ·PjM76]ODêîNuHğIÎ±2­8µãx¢ ÆÑr$Ûm2é:LÏ-­Èr-EIYQP†4,’ »»*ì’¤³ÈàÉ$„		rŒÊáFŞ¸±^­i¾­ŠnĞYÅ¬¹¢`Ò¤Ê’dàÍ#K±Z­JË,'•€yİ‘ÒU»bˆ‰PÆËŸÉVv©{`Ö“k?S•eY—P"9y¡IÓC‚!hÃ”•æÜ¯0œ¹q"† {íÂhäÑ™Je’“9tÓ	êP„¨fF7‚1…d²F–Ö,çêƒO¹e¦9V—ñà=æí•Á›ºlÜ1©×N¬tÜ}‘K#•‹rüF-Û†­œI…Q
+˜ó6nÏ4kBmAM:Ñ´t%`‚Q-<¾Õ$Ê5§H„ÆVE*'TwHËí½J†äI_ŸÑM˜åH$Gî›Ò[n 5D.‘ÍM#²ÆéµÀ,Œëc‰íöÿ ŒÚ*ù•`¥[5ˆ÷OØ!ìQ±Ø^:V!’íwV‡Cºd„ÆØótG i{D¨©¤lû6¨¢—¾fÚêQšÂ£2DUDe`ŠıK­­á¨Ë%1Ë-]:Ë&ò¡<v -Ëwsp}æü`%Rl×6UÉ8ûÇØy(Ñ0±ÑªÈHK‚
+åf2nŠôĞ¯Øİ°j.$bÌs	kéÌÆHjªrÇïÖ©+…)6’B¦Jrà¿¼«"1—¢ê
+‚A+Üî’(˜AEÜ—°à²´›ƒó¶*Œµ`ªL`›[øç(å¢º¼²1‰Ë¬éÄ%r®X#¬¬‘cLŞ"q™’+s
+'MàˆCî ÆìòmX;FÒÔæ]í$9¼p—1@‹<j­êÆ7wDÁ™v°•|# ÚÆŸ/}©j)é‚Kø:G+¹Ë#u 2¨*İ9äXÆ]¥3êÕ³eª»
+É]Ù$g2­!µªMôc¤¡aWÊ¶+,k†şÏ'>²1¯Ü(RE-&h´v‚i®¡À>’G¥ı åuMXE"d1¨a¹–‰ñì¨pÏ¸Ä¨È&³o|ˆ¾6¿7èWà—·Ÿ\x.ˆ5Â`—€²3D@Ë²‘ox)&«Â9(ö¸Ê«$Ş¾ÕD0±
+Uƒ²¸“YD‘æäÀ—ÏÒƒKŠ
+ıj¢pO*ağ9½Ìî»Íêº ! f²‹ñû5Wzœ«p?HÜ[óù çã‚ÑTìˆàÃS³á¼lÁ2šoÄ:r´aÕ¦ŞUd¥ÛaóÓ¦"ïí3r —–Rr—
+KWç‹xQìÚ¬³Fİ²‰T ¶ìƒ-Aíô™åL…3JšÔ©²5=ê´>Í#÷EV)™7©GfUv¹¸3Máé•é{”Œ¥È÷lCoü°¹ãÈb­Q™½aa›u!àªM~aİêc;F_ªÛ!d¢3E©¬‹<ÁcRAª‘ru<—P$dB1J	Xd]&º«¬°æ“ìÆ›Á]•ê	å‰iE!ŠXãÚÔÉcL›Ü$‚C$†A~ó½d*WësfÌ)ezeVİ¼ÆáÍ÷z†P<¬Rq§‹ÖH‹Å”ÖéQrLwÓş"´³U0´f„‚Óîgs·„€·+`¯bègm•Tœ…vÉ(™Á1'#—ä¨Èkµgjúö®µéÚ-EQoÅ+¼ò˜b+{‡«‘YTŸA`l1©ô¼ĞG¦4…=\èÑ'w n±$í©¹ÇV•‘¦ğ.”-yŠŸ—94 -mRhİñ˜3u*Ê»'*
+5åÖ  ë
+¿²gGT >DV™¦QG«;IË´¶e>Ì½H	TTi]¨O
+G]O•j¢Jùa2ÆM")ÜÁ"ß½­{yså‹õ	»Ë*Ş”òì‚®c#¤,™/.RU…à­a+«:2ä$H•e[zø†1ötÙTÑP©œÊ˜
+©Ì*5ZûOÒÎÆr©MI7 Š½W…2F§xå9aq´g“QC›Mšä¥Z
+ŠˆâD‘NäVwB%.7Jlì-¾0n@RÙ¿*a—Ö|£•ó]ıÅS9dØ–«QñE†Ñy»¼¸®{KFÏš©+	œ$Pˆ¸qÜ9ÊäGˆ”KÖÒ:sWI—éı?£ò!W˜~¥”ŠŠÈ¢§aüQu!ZI’IyB®Ğc›ßfZ¨‘«`Ø­–c}ÛGÃ‘àb¤\¶ÓÀ¶!«[q¦t¢ê'¤ÜÖÛKÌÁJ´ÓmÈ¡3³\pÏT  šÏÑ™#.Î&ç!İJ&øêƒôl'@ŠNs]}ÙşwØ¶™¨–JL©4«E47Æµ³*¶‘’v1—…$2Dc DÉ%”€3‘iš¼ÚÖb¦Zz£¢™„EO1½%3™¢“—rcÜ{¢¾.dçïÓnOã\×M½cœƒ“cqdŞ<È
+á–ÆƒyAû-QæF® Y”f²Ä¼!*Õ²Äqïíœé”M˜ÿ ”Kç	­õ>šÎrªºkc©¡›ÙÌ©t‘à•Â ¤ñw€YÙv©‘ÖåWQcœéüŸ!¤š9²5038hZ–dhÛhÌ2FÍ»u•'m½WV¥ıUâ3J¶Ör.;‹•Â5\âö»›mõuŒî8Ú¶6HİJ*IAT|SkÚ!ğö^Éé¡“TV*ÎQ´ÇfÉ·<ÒYVI¯ôŞ·ŸıĞ*òôª¨2ílšº™U^-)ÀK‰X:Š‚Œ"—ÂÃ:Õ¹,?…ôMf@’ĞEUì¨ñ»¬°4\´Ë3 Ü¾0àË#wxšçX?Ñ^%d!b51äOÁj˜ú!Õ¢“GºÎµèó·@æg-%Ú*ÈÈ¢åÊéTÈ¢}ÒöƒAiı-v¨®Zyóz§Üó?u#C†BÈÀmuæêl-r¬Wœ%krYrèÑå¥‘ªv­€P÷vñ21;H /{cÓoñO4cşf¿~çş+şÇıáÿ £ÿ }Úë2)Ÿèæ„÷ÿ ¦ÔßEô¿Ñæ÷¿Wôÿ Wv7weÓL“ş¦=ÿ sòg¹ü{İŞ<vşÃ÷WáO©'ö/»‹ÕÏëÿ Ûş¨şõìu´oø[®úÊš/şŸò|ŞïÃügüŸ½Á•ÿ ‚”ú?ªê«ÿ ×ä÷¾à?¬¾*‰Å%ıÅüKWûßâz÷sş7ş÷ÿ ßè¢“ú)ÛG×ÿ &|ú¯ä¿¬~§øë6b›7ü¹ÙwÕ~”û¾ÿ ×!÷>ãn:ygñJ×ø]ø3©ï¹?Û~ïßÿ Çÿ ë_÷œz4ìò5GåO©Ó}gÜÿ ‰}Gü—üêîÀ—ò„ü—’}Wò£ıÑı^o¥ıoÒÿ ;—§×ß0ûßıVSüIıã÷oş±ÿ Á_ê¿îgÒ·ÉôŸ“ş“/ú¯Ñı#}Sü¯ü7ùO´a×¤?&Ïõ¿­Ÿ®}?—¿ı_üŸşK·ş¦ÿ 	ï_ÅèOÂ¯¼Ÿdû½ş(ÿ ù}Tömı3Éúÿ G›ë^ÿ åOïŸäÿ £ş[lSk??wèÏÕ¾“«Üÿ ú»±SJşb¿ëÿ ïGİŞv»?ìş_âú|ié§úËMõ?§ú:o­_ú_ä½ŞÕ¿QŸİúôşïº}Ïİú×Ç¯_ÿ ‰xøişäw}õû·JüEÿ sÿ ³ïñ>“äÜÇòŸôŞŸGùB©ş¿ü¯ú›°­íKèeú§äŞŸõQôÿ ÿ SúËc'w¯¿Ù÷ÏâNCşÍı_ßIÏş¯çÿ ‹¯¬”¿WCîytè=ß‡§ÙŒJ>Œ}7»ÿ §û=q/íïß§ú_³ù}?Û×Ïÿ ‹t?öşìxò?Xş?¿‚şÉ¿~}ëû_²_Úÿ Ãÿ ã¯Óî¿Õü¾_gÇOĞ§ëûü¿~9S¿¹¤¿}şëş³úŸì«~×ûŸûìßªª¤ÿ ‹u}ï³ãú8Ÿôİ<ú}¿iÃÔŸø­ÑßâàµkîÇÜ_ác~îşèÿ ]trëåÿ eŸ”§ä¿Ë‰ô¿YúüŞÿ ëÿ ‹ÿ ]ljô—ı7Õdú?wİ_wáëğÁ•¬ÿ áwş·¿xâ¿ºÿ †?Ûı÷ıÕÿ cşµÖUì“şäŸ¢­úo®}÷¿ë=®İ†ŞcõVú×XıÏsŞş7ş®?ıÀÓï÷İ¶yÿ p4ıŸğŸıŸ÷:ÉyÏÖj>§ôÏô_YúCïÿ [ëğÅéü ŸOïÿ {úoó?_ô[õûÃNûÇø«“¿®ü?üMşÕıÕÿ vşï÷½}9şN“sÏªşF ÷~µõ¾õ¿OúßgÅ¡ş•ÑıcÜ“é=ß­Ëôÿ ­şõ{ì5ŸK¸yÓñïÚ_ƒŸŸsª½¿ığ}“¿ÊOë½›G¿¢ÔŸ•>¿õÌÇŞıOë÷â¾“òæ´ü½ı&Ÿê~ïÔ¨ş‹ÿ _õ[qdIıÀ³Òø÷üÿ lû§!ø£ş$ÿ Ôÿ ş¡d¿ñoø=ü–?¥>ïÓÇõ/‡øÏùØÖŸA–şYúÉßMî'Òÿ ’ÿ ŒùxLÒŸÅ}oñûø„û½ø×÷‰·ñÿ ¿ßõ×ş>]noø!Ëÿ ¡Ñ©~«õqş‡úŸÑûp“Ì?§5ßÒoÊ‘}gëFŸGğı…°âñ÷õ7¹?—¯»_y¿v³ıÓş1ÿ ½ÅíÒæƒòMäß©Ãó÷[Şş«ôRøš}sÿ Æ~”ûŞç_üú±ÿÙ

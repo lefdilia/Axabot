@@ -1,0 +1,197 @@
+# Mngui
+
+ Open Source MongoDB GUI Management
+
+Mngui is user interface (GUI) to manage local and distant MongoDB connections/databases, with simple access to Mongo shell via simple editor.
+
+###### * App built on ExpressJs / NodeJs
+
+## Installation
+
+1. Install Mngui : `git clone https://github.com/ismailalaoui/mngui.git && cd mngui`
+2. Install dependencies : `npm install`
+3. Start the App : `npm start` 
+4. Access via browser : http://127.0.0.1:3000
+
+> You can run on different Port. 
+>
+> **Example :** To run on 8080 start app with : `PORT=8080 npm start`
+
+## Features
+* Simple Access of Mongo Shell *(Autocomplete with helpful MongoDB Methods/Options)*
+* Easy Manage of databases
+* Create / Export / Delete / Restore Databases
+* Create / Delete Collections
+* Insert / Edit / Delete Documents
+* Create / Delete indexes
+* Query Documents
+* Simple Export of Collections (JSON)
+* Analyze Schema
+
+
+## Language
+Mngui support Multiple Language : **French**, **English**
+* By default the App use **French** as Default Language.
+
+## Usage
+ ### <span style="color:#8b5656;">New Connection</span>
+
+After the app start first time, you get a new modal pop, asking for the information needed to connect :
+
+*The Connection can be Local **127.0.0.1** or Remote (**IP / Mongolab**)*
+
+![Alt text](_md_screenshots/1_1.png "Add new Connection")
+
+<table>
+
+<th>#</th>
+<th>Description</th>
+
+<tr>
+<td>Name</td>
+<td>Must be a unique name for the connection</td>
+</tr>
+
+<tr>
+<td>Hostname</td>
+<td>Server / IP of Mongodb host. <b>Default : 127.0.0.1</b></td>
+</tr>
+
+<tr>
+<td>Port</td>
+<td>Mongodb connection Port. <b>Default : 27017</b></td>
+</tr>
+
+<tr>
+<td>Database</td>
+<td>Name of database</td>
+</tr>
+
+<tr>
+<td>Authentication</td>
+<td>Type of authentication. <b>Default : none</b></td>
+</tr>
+
+</table>
+
+![Alt text](_md_screenshots/1.png "Add new Connection")
+
+![Alt text](_md_screenshots/2.png "Connect to existing Connection")
+
+>
+> If Database Support *Authentication*, you can change in `Authentication menu` 
+>
+
+![Alt text](_md_screenshots/1_2.png "Authentication menu")
+
+### <span style="color:#8b5656;">List Databases</span>
+
+ #### After the new connection is established, you will be able to list all databases for this connection.
+![Alt text](_md_screenshots/3.png "List Databases")  
+
+*Mngui offer a list of Server information (Local connection only)*
+
+* Mongodb Version
+* Process ID
+* Uptime for Mongodb Server
+
+![Alt text](_md_screenshots/3_1.png "Server Infos")
+
+## 
+ #### You can select collections from the left side menu, and get the list of opened collections as tabs on top of the editor, with multiple information about the chosen database :
+
+ * Number of collections
+ * Allocated Size
+ * Average Document Size
+ * Number of Indexes
+ * Total Size of Indexes
+
+![Alt text](_md_screenshots/4.png "Choose Database")
+
+### <span style="color:#8b5656;">Collection Menu</span>
+
+![Alt text](_md_screenshots/4_1.png "Menu Access")
+
+>#### <font color="#C44354">Documents</span>
+>* List all documents available using simple pagination system. (You can Edit / Delete document)
+
+![Alt text](_md_screenshots/4_2_1.png "List documents")
+
+>#### <font color="#C44354">Indexes</span>
+>* List available index (You can Delete index if needed)
+
+![Alt text](_md_screenshots/4_2_2.png "List Indexes")
+
+>#### <font color="#C44354">Query Logs</span>
+>* In MNgui, Profiler is enabled by default, and collects detailed information about queries, and since Mongodb write all collected data to `system.profile`, we can list the records available on that collection as documents.
+
+![Alt text](_md_screenshots/4_2_3.png "Query Logs")
+
+
+>#### <font color="#C44354">Schema</span>
+>* MNgui offer a probabilistic schema for the current collection based on structure of the documents already inserted, by analysis of sample documents data (~ 1000 Documents)
+
+![Alt text](_md_screenshots/4_2_4.png "Schema")
+
+## 
+  ### <span style="color:#8b5656;">Simple Editor available to Edit / Save documents</span>
+>Mngui use ACE editor, with the possibility of tracking errors while Create / edit JSON Documents
+
+![Alt text](_md_screenshots/5_1.png "Error Documents")
+
+![Alt text](_md_screenshots/5.png "Edit Save Documents")
+
+## 
+ ### <span style="color:#8b5656;">Easy access to Mongo Shell, with simple buttons to switch between `Documents` And `Shell`</span> 
+ > Autocomplete is available on shell editor to simplify query typing
+
+![Alt text](_md_screenshots/6.png "Mongo Shell")
+
+## 
+### <span style="color:#8b5656;">List Available Documents on chosen collection, with a simple pagination system</span>
+
+![Alt text](_md_screenshots/7.png "List Documents")
+
+ ## 
+ ### <span style="color:#8b5656;">A simple Drop-down Menu for quick access </span>
+
+* Delete Selected Documents
+* Add Index
+* Export Collection [* Number of documents]
+* Import Collection [* Only JSON File authorized]
+* Clear Collection
+* Delete Collection
+
+![Alt text](_md_screenshots/8.png "List Documents")
+
+ ## 
+ ### <span style="color:#8b5656;">Add Index Example </span>
+
+![Alt text](_md_screenshots/9_1.png "List Documents")
+
+ ## 
+ ### <span style="color:#8b5656;">Export Database</span> 
+>You can export Database from left side menu  
+
+![Alt text](_md_screenshots/11_1.png "Export database") 
+
+###### *Mngui use `Mongodump` to export Full database, and Compressed as Zip File with nodejs to simplify Download
+
+![Alt text](_md_screenshots/11_2.png "Zipped dumped database") 
+
+ ## 
+ ### <span style="color:#8b5656;">Delete Database</span>
+>You can Delete Database from left side menu 
+>
+ ![Alt text](_md_screenshots/11.png "List Documents") 
+
+ ## 
+ ### <span style="color:#8b5656;">Delete Collection</span>
+>You can Delete collection from right side menu 
+>
+ ![Alt text](_md_screenshots/12.png "List Documents") 
+
+
+
+ # License
+[MIT](/LICENSE "MNgui MIT license").

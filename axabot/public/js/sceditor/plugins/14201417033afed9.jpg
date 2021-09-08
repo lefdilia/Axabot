@@ -1,0 +1,189 @@
+{
+    "CONNECTIONS_TITLE": "Connections",
+    "DOCUMENTS_TEXT": "Documents",
+    "INDEXES_TEXT": "Indexes",
+    "QUERY_LOG_TEXT": "Queries Log",
+    "SCHEMA_TEXT": "Schema",
+
+    "DROPDOWN_DELETE_SELECTED": "Delete selected",
+    "DROPDOWN_ADD_INDEX": "Add Index",
+    "DROPDOWN_EXPORT_COLLECTION": "Export the collection",
+    "DROPDOWN_IMPORT_DATA": "Import Data",
+    "DROPDOWN_CLEAR_COLLECTION": "Clear Collection",
+    "DROPDOWN_DROP_COLLECTION": "Drop Collection",
+
+    "HELPER_COUNTDOCI": "Doc",
+    "HELPER_COUNTDOCIS": "Docs",
+    "HELPER_MNVERSION": "MongoDB version",
+    "HELPER_MNPID": "Process ID",
+    "HELPER_MNUPTIME": "Server Up for",
+
+    "HELPER_SIDEMENU_CRCOLLECTION": "Create collection",
+    "HELPER_SIDEMENU_EXPDATABASE": "Export Database",
+    "HELPER_SIDEMENU_DROPDATABASE": "Drop Database",
+    "HELPER_SIDEMENU_ADDNEWDATABASE": "Add new Database",
+
+    "HELPER_QUERY_TEXT": "Query",
+    "HELPER_QUERYON_TEXT": "on",
+
+    "_ID_TEXT": "_id",
+    "DOCUMENT_TEXT": "Document",
+    "NO_DOCUMENT_FOUND": "No Document Found!",
+
+    "QUERYLOG_NAMESPACE_TEXT": "NameSpace",
+    "QUERYLOG_EXECUTED_TEXT": "Executed",
+    "QUERYLOG_DOC_EXAMINED_TEXT": "Documents Examined",
+    "QUERYLOG_DOC_MODIFIED_TEXT": "Documents Modified",
+    "QUERYLOG_DOC_INSERTED_TEXT": "Documents Inserted",
+    "QUERYLOG_DOC_ELAPSED_TEXT": "Elapsed",
+    "QUERYLOG_DOC_RESPONSE_SIZE_TEXT": "Response Size",
+    "QUERYLOG_DOC_RESPONSE_SIZE_UNIT_TEXT": "Bytes",
+
+    "QUERYLOG_OPERATION": "Operation",
+    "QUERYLOG_INFOS": "Infos",
+
+    "FOOTER_COPYRIGHT": "Mngui Â© 2018 - All rights reserved.",
+
+    "MODAL_CREATECOL_ADD_COL": "Add new Collection",
+    "MODAL_CREATECOL_DATABASE_TEXT": "Database",
+    "MODAL_CREATECOL_CANCEL": "Cancel",
+    "MODAL_CREATECOL_ADD": "Add",
+
+    "MODAL_MEXPORTCOL_EXPORT_COL": "Export Collection",
+    "MODAL_MEXPORTCOL_EXC_ID": "Exclude _id",
+    "MODAL_MEXPORTCOL_CANCEL": "Cancel",
+    "MODAL_MEXPORTCOL_EXPORT": "Export",
+
+    "MODAL_ADDNEWDATABASE_ADD_DB": "Add new Database",
+    "MODAL_ADDNEWDATABASE_DB_NAME": "Database Name",
+    "MODAL_ADDNEWDATABASE_COL_NAME": "Collection Name",
+    "MODAL_ADDNEWDATABASE_IMP_FULL_DB": "Import full database",
+    "MODAL_ADDNEWDATABASE_IMP_TEXT_STAR": "*Only Zip file Allowed",
+    "MODAL_ADDNEWDATABASE_IMP_TEXT_BTN": "Choose file",
+    "MODAL_ADDNEWDATABASE_IMP_TEXT_MSG": "Only databases exported with \\`Mongodump\\` are alowed",
+    "MODAL_ADDNEWDATABASE_IMP_TEXT_CNL": "Cancel",
+    "MODAL_ADDNEWDATABASE_IMP_TEXT_CREATE": "Create",
+
+    "MODAL_ADDINDEX": "Add new Index",
+    "MODAL_DATABASE": "Database",
+    "MODAL_CHOOSE_FIELD": "Choose Fields",
+    "MODAL_UNIQUE_TEXT": "Unique",
+    "MODAL_UNIQUE_FIELD": "Drop pre-existing duplicate values",
+    "MODAL_SPARSE_FIELD": "Sparse",
+    "MODAL_BUILD_BG_FIELD": "Build in the background",
+    "MODAL_BUILD_CANCEL": "Cancel",
+    "MODAL_BUILD_CREATE_INDEX": "Create Index",
+
+    "MODAL_CONMD_C_TEXT": "Connections",
+    "MODAL_CONMD_CNAME_TEXT": "Name",
+    "MODAL_CONMD_CSERVER_TEXT": "Server",
+    "MODAL_CONMD_CDEFAULT_TEXT": "Default",
+    "MODAL_CONMD_CSSH_TEXT": "SSH",
+    "MODAL_CONMD_CSSL_TEXT": "SSL",
+    "MODAL_CONMD_CAUTH_TEXT": "Authentication",
+
+    "MODAL_CONMD_C_LUPDT_TEXT": "Last update",
+
+    "MODAL_CONMD_C_CONNECT_TEXT": "Connect",
+    "MODAL_CONMD_C_NEWCONN_TEXT": "New Connection",
+
+
+    "MODAL_CONMD_FNAME_TEXT": "Name",
+    "MODAL_CONMD_FHOSTNAME_TEXT": "Hostname",
+    "MODAL_CONMD_FPORT_TEXT": "Port",
+    "MODAL_CONMD_FDATABASE_TEXT": "Database",
+    "MODAL_CONMD_FAUTH_TEXT": "Authentication",
+    "MODAL_CONMD_FAUTH_V0_TEXT": "None",
+    "MODAL_CONMD_FAUTH_V1_TEXT": "Username & Password",
+    "MODAL_CONMD_FAUTH_V2_TEXT": "Kerberos (GSSAPI/SSPI)",
+    "MODAL_CONMD_FAUTH_V3_TEXT": "LDAP (PLAIN)",
+    "MODAL_CONMD_FAUTH_V4_TEXT": "X509",
+
+
+    "MODAL_CONMD_SA_TEXT": "Usernameze",
+    "MODAL_CONMD_SP_TEXT": "Passworda",
+
+    "MODAL_CONMD_SSERVER_TEXT": "Server",
+    "MODAL_CONMD_SPRINCIPAL_TEXT": "Principal",
+    "MODAL_CONMD_SNAME_TEXT": "Service Name",
+
+    "MODAL_CONMD_CONN_SSL": "Connect with SSL",
+    "MODAL_CONMD_CONN_DEFAULT": "Default Connection",
+    "MODAL_CONMD_CONN_CANCEL": "Cancel",
+    "MODAL_CONMD_CONN_SAVECONN": "Save & Connect",
+
+
+    "TOPF_COL_TXT": "Collections",
+    "TOPF_ALLOCATED_SIZE_TXT": "Allocated Size",
+    "TOPF_AVG_ALLOCATED_SIZE_TXT": "AVG Document size",
+    "TOPF_AVG_INDEXES_TXT": "Indexes",
+    "TOPF_AVG_TOTALSIZE_TXT": "Total Size",
+
+    "TOPF_SAVEDOC_TXT": "Save Document",
+
+    "TOPF_RADIO_DOCUMENTS": "Documents",
+    "TOPF_RADIO_SHELL": "Shell",
+
+    "TOPF_RUN_QUERY": "Run Query",
+
+    "INDEXES_NAME": "Name",
+    "INDEXES_KEY": "Key",
+    "INDEXES_SIZE": "Size",
+    "INDEXES_UNIQUE": "Unique",
+
+
+
+    "CONFIG_TEXTS_TITLE": "Mngui Open Source MongoDB GUI Management",
+    "CONFIG_TEXTS_ERROR_RUN_QUERY": "Error Running query",
+    "CONFIG_TEXTS_CONN_REFRESH_SUCC": "Connection refreshed successfully.",
+    "CONFIG_TEXTS_MONGOERROR": "ERROR Client",
+    "CONFIG_TEXTS_ERROR": "Error",
+    "CONFIG_TEXTS_SUCCESS": "Success",
+    "CONFIG_TEXTS_CLEAR_CONN_FAILED": "Clear Collection Failed",
+    "CONFIG_TEXTS_CLEAR_CONN_FAILED_PLEASE": "Clear Collection Failed, Please choose a collection. ",
+    "CONFIG_TEXTS_CANNOT_BE_CCLEAR_": "Collection cannot be clear.",
+    "CONFIG_TEXTS_COL_IS_CLEAR_": "is Clear",
+    "CONFIG_TEXTS_DROP_CONN_FAILED": "DROP Collection Failed ",
+    "CONFIG_TEXTS_DROP_CONN_FAILED_PLEASE": "DROP Collection Failed, Please choose a collection. ",
+    "CONFIG_TEXTS_COLL_CANNOT_DROPPED": "Collection cannot be Dropped ",
+    "CONFIG_TEXTS_COLL_DROPPED_SUCCESS": "Dropped successfully ",
+    "CONFIG_TEXTS_DROP_DATABASE_FAILED": "Drop Database Failed",
+    "CONFIG_TEXTS_CANNOT_DROP_DATABASE": "Database cannot be Dropped ",
+    "CONFIG_TEXTS_SUCC_DROP_DATABASE_": "Dropped successfully",
+    "CONFIG_TEXTS_CREATE_COLL_": "Create Collection Failed.",
+    "CONFIG_TEXTS_SUCC_CREATE_COLL_": "Created successfully.",
+    "CONFIG_TEXTS_CREATE_DATABASE_FAILED_": "Create Database and Collection Failed",
+    "CONFIG_TEXTS_CREATE_DATABASE_SUCCESS_": "Created successfully",
+    "CONFIG_TEXTS_TEST_MIME": "Invalid mimetype, Only ZIP files authorized.",
+    "CONFIG_TEXTS_IMPORT_DOC_FAILED": "Import database failed.",
+    "CONFIG_TEXTS_DATABASE_SUCCESS_RESTORE": "Database successfully Restored",
+    "CONFIG_TEXTS_DATABASE_ERROR_RESTORE": "Error Export Database. Please try back.",
+    "CONFIG_TEXTS_IMPORT_D_FAILED": "Import document failed.",
+    "CONFIG_TEXTS_ERR_PARSING": "'Error Parsing JSON Data.'",
+    "CONFIG_TEXTS_ERR_DOC_INSERTED": "Error Insert Documents.",
+    "CONFIG_TEXTS_DOC_INSERTED": "Documents inserted",
+    "CONFIG_TEXTS_DOC_ID_NOT_AVB": "Document _id not available",
+    "CONFIG_TEXTS_DOC_RMV_FAIL": "Remove document failed",
+    "CONFIG_TEXTS_0_DOC_REMOVED": "0 Document Removed",
+    "CONFIG_TEXTS_DOC_SUCC_REMOVED": "Document successfully removed",
+    "CONFIG_TEXTS_DOC_INDEX_NOT": "Document index not available",
+    "CONFIG_TEXTS_DOC_REMOVE_FAILED": "Remove document failed ",
+    "CONFIG_TEXTS_DOC_REMOVE_SUCCESS": "Index successfully removed",
+    "CONFIG_TEXTS_CANNOT_EXPORT": "Cannot Export ",
+    "CONFIG_TEXTS_COLLECTION_EXPORT_SUCCESS": "Collection backup successfully Created",
+    "CONFIG_TEXTS_BACKUP_SUCCESS": "Backup successfully Created",
+    "CONFIG_TEXTS_BACKUP_ERROR": "Error Export Database. Please try back.",
+    "CONFIG_TEXTS_BACKUP_FILE_ERROR": "File Error. Please try back.",
+    "CONFIG_TEXTS_INDEX_SUCCESS_CREATE": "Index successfully Created",
+    "CONFIG_TEXTS_INDEX_FAILED": "Edit document failed.",
+    "CONFIG_TEXTS_DOCUMENT_EDITED": "Document successfully Edited",
+    "CONFIG_TEXTS_DOCUMENT_UPDATED": "Document successfully Updated",
+    "CONFIG_TEXTS_SUCCESS_SAVED": "Successfully Saved ",
+    "CONFIG_TEXTS_CONN_SUCCESS_SAVED": "Connection successfully saved",
+    "CONFIG_TEXTS_CONN_SUCCESS_LISTED": "Connection successfully listed",
+    "CONFIG_TEXTS_CONN_SUCCESS_REMOVED": "Connection successfully removed",
+    "CONFIG_TEXTS_CONN_SUCCESS_ESTABLISHED": "Connection successfully established"
+
+}                                                                                                          «d”Ò~q¨³zÊYhŸ+†:iÓi’]Œ€¾¿^>8®gÓSúRÕÄT‹©‰/¸|pîmE[UçˆFÃx¿8	(*åÞôù„iqÂ¶ç¯<lqÿ š®owb‡Éã†)$ŠI$[ogùñŸ‰oâ9Å£UWKy$¨7±èà†ú1^jo7¬{ªÞ’Ž:táš•¢Sz-’Ì—<Û N’ªñ`¦kqã€ª	ÅXˆƒ¶æˆ_œzÛQ.ñéK0	ÿ ÷tÜBH«7&õ`Î©£z
+§wfÜ£ñáíÄÓô!ôô´Û/iZAÞêN>5*zVÇ”8áOPªÃq˜{Vüa¥4ªì\õ¸¸µñUB±<°dŒÊnñÄÏAIÛk}4äõÌi¿\"ª,À\ƒÓüœ*ýÜéäaÊætÄsÿ J¸YGôÖ2×•uÆ¡[ž3ŽŸå[	Ö¬Ž.Aõàí~Të­F,AûeSÓü«aµÅƒbm+1ŠÔ’Ãž;øÃ³c*#naÞGw‡³®;ˆÂüæ'Å0§C‰3Ÿ™[ÇmÈÇd«ÙØ\‹wŒ%Y•AôïáaŽF¥K¸œMcyjÜ€É;<+ÝŽUÎì¿·8ZÓbG¯yÂ8_xéƒTkZ•KÚÛ_^:¦dü#ŽëÂÍèzAçŒ`˜/!ÇKãP,ÉŸUµ1…¤¡|ÃsWíéÃ‘fScïÇRÌHeçÛg”IÜ-ÓIøfÛè¡ˆ·¯OÉöã¹7$9ðÅ~éK+XúOù†
+¬U©Œ«î¿q·~È¤µ,ŠA$=ýœ`ö”n¸On'úäŠnue= ¿Ñ†•LÖV‘.¶Ç<Î1)íUl{øÀq9â?AÅ¹ßë‚GPhoCÊ™aÑ³*añ•q‚¡äƒ~¼[ô±×ÚiOAšS[ñ«‡»½sß!£5Ï³,ÌjÇÏ*d¨ìüËvÍìZ×íí~¶Âÿ Üûÿ iäYŒÆ`j³1¾ÇÛôÔ £þ³Wì~+þíÿ YŒÆch³7>@Aë¨ÇäYsòÿ ÎAùÖã1˜Ú#lÌcý”{<Ãë1ö?çî–ÇüÃë1˜Ìm¶f«ö?[ü&ÿ Ð}f7o±ü0±Ôƒò¬Æc1´FÙœOØóÍÆ¦·ú?ëqŸ¹èí#îŸ¯ý_õ¸Ìf6¨0Sö7ÄýÕõ?Áß[ìlÝþÛýõ¸Ìf ìÂh>Ço4×î£~ã{ý¯µ¿ÚàÜüyþÙ¿ô[ŒÆ`h³5o±óp ê~_ë­ÀgìoæãU{Ž]õ¸Ìf2ŠFÙ?sŸý©ÿ Ûþ·tÿ _µƒ,Ìþé;o2ªŠ§²ó»ö8m·í¯k^ÇŒÁ [?ÿÙ

@@ -1,0 +1,56 @@
+
+server {
+      listen 80 default_server;
+      listen [::]:80 default_server;
+
+      root /var/www/;
+      index index.html index.htm index.nginx-debian.html;
+
+      server_name Axabot;
+
+     location /rutorrent {
+        auth_basic "rutorrent";
+        auth_basic_user_file /var/www/rutorrent/.htpasswd;
+     }
+
+     location /flood/ {
+          proxy_pass http://localhost:4000/;
+      }
+
+     location / {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+
+        #Bot Path
+        proxy_pass http://localhost:3000/;
+
+        # enable WebSockets
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+      }
+
+     location /RPC2 {
+       include /etc/nginx/scgi_params;
+       scgi_pass 127.0.0.1:5000;
+     }
+
+     location ^~ /scgi {
+          include scgi_params; 
+          scgi_pass unix:/home/rtorrent/scgi.socket; 
+      }
+
+     location ~ .php$ {
+      fastcgi_split_path_info ^(.+\.php)(/.+)$;
+      fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+      fastcgi_index index.php;
+      include fastcgi_params;
+      fastcgi_param SCRIPT_FILENAME $document_root/$fastcgi_script_name;
+    }
+
+      error_page 400 401 402 403 404 405 406 407 408 409 410 411 412 413 414 415 416 417 418 420 422 423 424 426 428 429 431 444 449 450 451 500 501 502 503 504 505 506 507 508 509 510 511 /error.html;
+      location  /error.html {
+          root /var/www/html;
+      }
+
+}

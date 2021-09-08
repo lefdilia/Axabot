@@ -1,0 +1,182 @@
+/**
+* geoJSON validation according to the GeoJSON spefication Version 1
+* @module geoJSONValidation
+* @class Main
+* @exports {GJV} 
+*/
+
+(function(exports){
+
+    var definitions = {};
+
+    /**
+     * Test an object to see if it is a function
+     * @method isFunction 
+     * @param object {Object}
+     * @return {Boolean}
+     */
+    function isFunction(object) {
+        return typeof(object) == 'function';
+    }
+    
+    /**
+     * A truthy test for objects
+     * @method isObject
+     * @param {Object}
+     * @return {Boolean}
+     */
+    function isObject(object) {
+        return object === Object(object);
+    }
+
+    /**
+     * Formats error messages, calls the callback
+     * @method done
+     * @private
+     * @param cb {Function} callback
+     * @param [message] {Function} callback
+     * @return {Boolean} is the object valid or not?
+     */
+    function _done(cb, message){
+        var valid = false;
+
+        if(typeof message === "string"){
+            message = [message];
+
+        }else if( Object.prototype.toString.call( message ) === '[object Array]' ) {
+            if(message.length === 0){
+                valid = true;
+            }
+        }else{
+            valid = true;
+        }
+
+        if( isFunction(cb)){
+            if(valid){
+                cb(valid, []);
+            }else{
+                cb(valid, message);
+            }
+        }
+
+        return valid;
+    }
+
+    /**
+     * calls a custom definition if one is avalible for the given type
+     * @method _customDefinitions 
+     * @private
+     * @param type {"String"} a GeoJSON object type
+     * @param object {Object} the Object being tested 
+     * @return {Array} an array of errors
+     */
+    function _customDefinitions(type, object){
+
+        var errors;
+
+        if(isFunction(definitions[type])){
+            try{
+                errors = definitions[type](object);
+            }catch(e){
+                errors = ["Problem with custom definition for '" + type + ": " + e];
+            }
+            if(typeof result === "string"){
+                errors = [errors];
+            }
+            if(Object.prototype.toString.call( errors ) === '[object Array]'){
+                return errors;
+            }
+        }
+        return [];
+    }
+
+    /**
+     * Define a custom validation function for one of GeoJSON objects
+     * @method define 
+     * @param type {GeoJSON Type} the type 
+     * @param definition {Function} A validation function
+     * @return {Boolean} Return true if the function was loaded corectly else false
+     */
+    exports.define = function(type, definition){
+        if((type in all_types) && isFunction(definition)){
+            //TODO: check to see if the type is valid
+            definitions[type] = definition;
+            return true;
+        }
+        return false;
+    };
+
+    /**
+     * Determines if an object is a position or not
+     * @method isPosition 
+     * @param position {Array}
+     * @param [cb] {Function} the callback
+     * @return {Boolean}
+     */
+    exports.isPosition = function(position, cb){
+
+        var errors = [];
+
+        //It must be an array
+        if(Array.isArray(position)){
+            //and the array must have more than one element
+            if(position.length <= 1){
+                errors.push("Position must be at least two elements");
+            }
+        }else{
+            errors.push("Position must be an array");
+        }
+
+        //run custom checks
+        errors = errors.concat(_customDefinitions("Position", position));
+
+        return _done(cb, errors);
+    };
+
+    /**
+     * Determines if an object is a GeoJSON Object or not
+     * @method isGeoJSONObject|valid
+     * @param geoJSONObject {Object}
+     * @param [cb] {Function} the callback
+     * @return {Boolean}
+     */
+    exports.isGeoJSONObject = exports.valid = function(geoJSONObject, cb){
+
+        if(!isObject(geoJSONObject)){
+            return _done(cb, ['must be a JSON Object']);
+        }
+
+        var errors = [];
+        if('type' in geoJSONObject){
+            if(non_geo_types[geoJSONObject.type]){
+                return non_geo_types[geoJSONObject.type](geoJSONObject, cb);
+            }else if(geo_types[geoJSONObject.type]){
+                return geo_types[geoJSONObject.type](geoJSONObject, cb);
+            }else{
+                errors.push('type must be one of: "Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", "GeometryCollection", "Feature", or "FeatureCollection"');
+            }
+        }else{
+            errors.push("must have a member with the name 'type'");
+        }
+
+        //run custom checks
+        errors = errors.concat(_customDefinitions("GeoJSONObject", geoJSONObject));
+        return _done(cb, errors);
+    };
+
+    /**
+     * Determines if an object is a Geometry Object or not
+     * @method isGeometryObject
+     * @param geometryObject {Object}
+     * @param [cb] {Function} the callback
+     * @return {Boolean}
+     */
+    exports.isGeometryObject = function(geometryObject, cb){
+
+        if(!isObject(geometryObject)){
+            return _done(cb, ['must be a JSON Object']);
+        }
+
+        var errors = [];
+
+        if('ty

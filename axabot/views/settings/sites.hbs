@@ -1,0 +1,200 @@
+<div class="ibox">
+    <div class="ibox-title">
+        <h5><i class="fa fa-cogs"></i>
+            Settings / Sites</h5>
+    </div>
+    <div class="ibox-content">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="tabs-container">
+                    {{> settings/tabs }}
+                    <div class="tab-content">
+                        <div id="sites" class="tab-pane active">
+                            <div class="panel-body">
+                                <button style="margin-bottom: 1.4rem;" data-toggle="modal" id="btnamodal"
+                                    href="#apismodal" class="btn btn-success pull-right btn-sm">
+                                    <i class="fa fa-plus"></i> Add new site
+                                </button>
+                                <table class="table table-border table-stripped">
+                                    {{#if this.apis.length}}
+                                        {{#each this.apis}}
+                                            <tr data-id="{{this._id}}">
+                                                <td>
+                                                    <b>Name : </b> {{this.name}}<br>
+                                                    {{#if this.data.username}}
+                                                        <b>User : </b> <span
+                                                            class="text-muted">{{this.data.username}}</span>
+                                                    {{/if}}
+                                                </td>
+                                                <td width="">
+                                                    <b>Url : </b> {{extractHost this.settings.url }} <a
+                                                        href="{{this.settings.url}}" target="_blank"><i
+                                                            class="fa fa-link"></i></a>
+                                                </td>
+                                                <td width="">
+                                                    <span class="label label-success text-capitalize"><i
+                                                            class="fa fa-link"></i>
+                                                        {{this.settings.type}}</span>
+                                                </td>
+                                                <td width="">
+                                                    {{#if this.settings.category}}
+                                                        {{#each this.settings.category}}
+                                                            <span class="label label-default">
+                                                                {{this}}
+                                                            </span> &nbsp;
+                                                        {{/each}}
+                                                    {{/if}}
+                                                </td>
+                                                <td>
+                                                    <div class="pull-right">
+                                                        <a data-toggle="modal" class="btn btn-primary btn-xs editapi"
+                                                            href="#apismodal"><i class="fa fa-pencil"></i> Edit</a>
+                                                        <button class="trashapi btn btn-danger btn-xs"><i
+                                                                class="fa fa-trash"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {{/each}}
+                                    {{else}}
+                                        <center>
+                                            <h5><i class="fa fa-exclamation-circle"></i> No API/URL Available</h5>
+                                        </center>
+                                    {{/if}}
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="apismodal" class="modal fade" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="row">
+                    <h3 class="m-t-none m-b">API</h3>
+                    <p>Website / API for autopost.</p>
+                    <form id="apisform" role="form" method="POST">
+                        <div class="form-group">
+                            <label><small class="text-danger">*</small> Name </label>
+                            <input name="stname" type="text" placeholder="API For..."
+                                class="form-control text-capitalize">
+                            <small class="text-muted">
+                                <small class="text-danger">*</small> The `<u>Name</u>` must be Unique
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label>URL/API </label>
+                            <input name="sturl" type="text" placeholder="https://www.google.org/API"
+                                class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Type</label>
+                            <select name="sttype" class="form-control">
+                                <option value="api">API</option>
+                                <option value="wordpress">WordPress</option>
+                                <option disabled value="joomla">Joomla</option>
+                                <option disabled value="drupal">Drupal</option>
+                                <option disabled value="phpBB">phpBB</option>
+                                <option disabled value="fluxbb">FluxBB</option>
+                                <option disabled value="vbulletin">Vbulletin</option>
+                                <option disabled value="datalife">DataLife Engine (DLE)</option>
+                                <option disabled value="ipb">IP Board</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Authorization</label>
+                            <select name="stAuth" class="form-control">
+                                <option value="0" selected>No Auth</option>
+                                <option value="1">Basic Auth</option>
+                                <option value="2">API Key</option>
+                                <option value="3">Bearer Token</option>
+                            </select>
+                        </div>
+                        <div class="_auth" data-type="1" data-sh="false" style="display:none;">
+                            <div class="form-group">
+                                <label>User </label>
+                                <input name="stusername" type="text" placeholder="Username" class="form-control">
+                            </div>
+                            <div class="input-group">
+                                <input type="password" placeholder="********" name="stpassword" id="stpassword"
+                                    class="form-control">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default" onclick="_showpasswd(stpassword);">
+                                        <i class="glyphicon icon-eye-open glyphicon-eye-open"></i>
+                                    </button>
+                                </span>
+                            </div><br>
+                        </div>
+                        <div class="_auth" data-type="2" data-sh="false" style="display:none;">
+                            <div class="form-group">
+                                <label>Key </label>
+                                <input name="stkey" type="text" placeholder="Key" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>Value </label>
+                                <input name="stvalue" type="text" placeholder="Value" class="form-control">
+                            </div>
+                        </div>
+                        <div class="_auth" data-type="3" data-sh="false" style="display:none;">
+                            <div class="form-group">
+                                <label>Token </label>
+                                <textarea name="sttoken" rows="5" type="text" placeholder="Token"
+                                    class="form-control"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label><small class="text-danger">*</small> Category (ID / Name)</label>
+                            <input name="stcategory" type="text" placeholder="Category ID / Name"
+                                class="tagsinput form-control">
+                            <small class="text-muted">
+                                <small class="text-danger">*</small> The `<u>ID</u>`/`<u>Name</u>` for the category
+                                on
+                                CMS like (WordPress/Joomla/Drupal/...)
+                            </small>
+                        </div>
+                        <div class="form-group _mextra" data-type="wordpress" style="display:none;">
+                            <label><small class="text-danger">*</small> Status</label>
+                            <select name="stpoststatus" class="form-control">
+                                <option value="0" selected>Draft</option>
+                                <option value="1">Publish</option>
+                            </select>
+                        </div>
+                    </form>
+                    <div>
+                        <button id="saveApi" class="btn btn-sm btn-primary pull-right m-t-n-xs"
+                            type="submit"><strong>Save</strong></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    [
+        "/assets/js/plugins/bootstrap-tagsinput/bootstrap-tagsinput.js",
+    ].forEach(function (src) {
+        var script = document.createElement('script');
+        script.src = src;
+        script.async = false;
+        document.head.appendChild(script);
+    });
+
+    $(function () {
+        $('#apismodal').on('shown.bs.modal', function () {
+            $('.tagsinput').tagsinput({
+                tagClass: 'label label-success',
+                freeInput: true,
+                trimValue: true
+            });
+
+            $('.tagsinput2').tagsinput({
+                tagClass: 'label label-primary',
+                freeInput: true,
+                trimValue: true
+            });
+        })
+    })
+</script>

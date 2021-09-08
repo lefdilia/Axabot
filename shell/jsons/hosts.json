@@ -1,0 +1,899 @@
+[
+  {
+    "server": "1fichier.com",
+    "link": "http://1fichier.com",
+    "shortcuts": [
+      "1fichier.com"
+    ],
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days",
+    "status": true,
+    "account_support": true,
+    "extra": {
+      "type": 1,
+      "inputs": [
+        {
+          "name": "Email",
+          "input": "email",
+          "type": "text"
+        },
+        {
+          "name": "Password",
+          "input": "password",
+          "type": "password"
+        }
+      ]
+    },
+    "data": {}
+  },
+  {
+    "server": "uploaded.net",
+    "link": "http://uploaded.net",
+    "shortcuts": [
+      "http://uploaded.net",
+      "ul.to"
+    ],
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days",
+    "status": true,
+    "account_support": true,
+    "extra": {
+      "type": 1,
+      "inputs": [
+        {
+          "name": "Account-ID",
+          "input": "username",
+          "type": "text"
+        },
+        {
+          "name": "Password",
+          "input": "password",
+          "type": "password"
+        }
+      ]
+    },
+    "data": {}
+  },
+  {
+    "server": "rapidgator.net",
+    "link": "http://rapidgator.net",
+    "shortcuts": [
+      "rapidgator.net",
+      "rg.to"
+    ],
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days",
+    "status": true,
+    "account_support": true,
+    "extra": {
+      "type": 1,
+      "inputs": [
+        {
+          "name": "Email",
+          "input": "email",
+          "type": "text"
+        },
+        {
+          "name": "Password",
+          "input": "password",
+          "type": "password"
+        }
+      ]
+    },
+    "data": {}
+  },
+  {
+    "server": "rockfile.co",
+    "link": "http://rockfile.co",
+    "shortcuts": [
+      "rockfile.co"
+    ],
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days",
+    "status": true,
+    "account_support": true,
+    "extra": {
+      "type": 1,
+      "inputs": [
+        {
+          "name": "Username",
+          "input": "username",
+          "type": "text"
+        },
+        {
+          "name": "Password",
+          "input": "password",
+          "type": "password"
+        }
+      ]
+    },
+    "data": {}
+  },
+  {
+    "server": "uptobox.com",
+    "link": "http://uptobox.com",
+    "shortcuts": [
+      "uptobox.com"
+    ],
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days",
+    "status": true,
+    "account_support": true,
+    "extra": {
+      "type": 1,
+      "inputs": [
+        {
+          "name": "Username",
+          "input": "username",
+          "type": "text"
+        },
+        {
+          "name": "Password",
+          "input": "password",
+          "type": "password"
+        }
+      ]
+    },
+    "data": {}
+  },
+  {
+    "server": "nitroflare.com",
+    "link": "http://nitroflare.com",
+    "shortcuts": [
+      "nitroflare.com"
+    ],
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days",
+    "status": true,
+    "account_support": true,
+    "extra": {
+      "type": 1,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Nitroflare uses <b>'Hash'</b>, you can get it here : <a target=\"_blank\" href=\"https://nitroflare.com/user-hash\"><b>Hash</b></a>",
+      "inputs": [
+        {
+          "name": "Hash",
+          "input": "hash",
+          "type": "password"
+        }
+      ]
+    },
+    "data": {}
+  },
+  {
+    "server": "turbobit.net",
+    "link": "http://turbobit.net",
+    "shortcuts": [
+      "turbobit.net"
+    ],
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days",
+    "status": true,
+    "account_support": true,
+    "extra": {
+      "type": 1,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Turbobit uses <b>'API-Key'</b>, you can get it here : <a target=\"_blank\" href=\"https://turbobit.net/user/settings\"><b>API Key</b></a>",
+      "inputs": [
+        {
+          "name": "API Key",
+          "input": "apikey",
+          "type": "password"
+        }
+      ]
+    },
+    "data": {}
+  },
+  {
+    "server": "mediafire.com",
+    "link": "http://mediafire.com",
+    "shortcuts": [
+      "mediafire.com"
+    ],
+    "max_upload_size_free": 10737418240,
+    "max_upload_size_premium": 10737418240,
+    "storage_time": "30 days",
+    "status": false,
+    "account_support": true,
+    "extra": {
+      "type": 1
+    }
+  },
+  {
+    "server": "mega.co.nz",
+    "link": "http://mega.nz",
+    "shortcuts": [
+      "mega.nz",
+      "mega.co.nz"
+    ],
+    "max_upload_size_free": 5368709120,
+    "max_upload_size_premium": 5368709120,
+    "storage_time": "N/A",
+    "status": false,
+    "account_support": true,
+    "extra": {
+      "type": 1
+    }
+  },
+  {
+    "server": "crocko.com",
+    "link": "http://crocko.com",
+    "shortcuts": [
+      "crocko.com"
+    ],
+    "max_upload_size_free": 2147483648,
+    "max_upload_size_premium": 2147483648,
+    "storage_time": "60 days",
+    "status": false,
+    "account_support": true,
+    "extra": {
+      "type": 1
+    }
+  },
+  {
+    "server": "oboom.com",
+    "link": "http://oboom.com",
+    "shortcuts": [
+      "oboom.com"
+    ],
+    "max_upload_size_free": 2147483648,
+    "max_upload_size_premium": 2147483648,
+    "storage_time": "N/A",
+    "status": false,
+    "account_support": true,
+    "extra": {
+      "type": 1
+    }
+  },
+  {
+    "server": "ryushare.cc",
+    "link": "http://ryushare.cc",
+    "shortcuts": [
+      "ryushare.cc"
+    ],
+    "max_upload_size_free": 2147483648,
+    "max_upload_size_premium": 2147483648,
+    "storage_time": "N/A",
+    "status": false,
+    "account_support": true,
+    "extra": {
+      "type": 1
+    }
+  },
+  {
+    "server": "uploadgig.com",
+    "link": "http://uploadgig.com",
+    "shortcuts": [
+      "uploadgig.com"
+    ],
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days",
+    "status": true,
+    "account_support": true,
+    "extra": {
+      "type": 1,
+      "info": "",
+      "inputs": [
+        {
+          "name": "Username",
+          "input": "username",
+          "type": "text"
+        },
+        {
+          "name": "Password",
+          "input": "password",
+          "type": "password"
+        }
+      ]
+    },
+    "data": {}
+  },
+  {
+    "server": "filebebo.com",
+    "link": "http://filebebo.com",
+    "shortcuts": [
+      "filebebo.com"
+    ],
+    "max_upload_size_free": 21474836480,
+    "max_upload_size_premium": 21474836480,
+    "storage_time": "60 days",
+    "status": false,
+    "account_support": true,
+    "extra": {
+      "type": 1
+    }
+  },
+  {
+    "server": "openload.co",
+    "link": "http://openload.co",
+    "shortcuts": [
+      "openload.co",
+      "openload.io"
+    ],
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days",
+    "status": false,
+    "account_support": true,
+    "extra": {
+      "type": 2,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Use <b><u>'API-Login'</u></b> And <b><u>'API-Key'</u></b> instead of <b><u>'Username'</u></b> And <b><u>'Password'</u></b>, you can get it here : <a target=\"_blank\" href=\"https://openload.co/account#usersettings\"><b>API Login/Key</b></a>",
+      "inputs": [
+        {
+          "name": "API-Login",
+          "input": "apilogin",
+          "type": "text"
+        },
+        {
+          "name": "API-Key",
+          "input": "apikey",
+          "type": "password"
+        }
+      ]
+    },
+    "data": {}
+  },
+  {
+    "server": "imageshack.us",
+    "link": "https://imageshack.us",
+    "shortcuts": [
+      "imageshack.us"
+    ],
+    "extra": {
+      "type": 4
+    },
+    "status": false
+  },
+  {
+    "server": "adfly",
+    "link": "http://adf.ly",
+    "shortcuts": [
+      "adf.ly"
+    ],
+    "extra": {
+      "type": 3
+    },
+    "status": false
+  },
+  {
+    "server": "imgur.com",
+    "link": "https://imgur.com/",
+    "shortcuts": [
+      "imgur.com"
+    ],
+    "extra": {
+      "type": 4,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Use <b><u>'Client ID'</u></b> And <b><u>'Client secret'</u></b> With <b><u>'Username'</u></b> And <b><u>'Password'</u></b>, you can get it here : <a target=\"_blank\" href=\"https://api.imgur.com/oauth2/addclient\"><b>Client ID/Client secret</b></a>&nbsp;&nbsp;&nbsp;<a target=\"_blank\" href=\"/assets/images/register_on_imgur_1.png\"><i class=\"fa fa-picture-o\" aria-hidden=\"true\"></i></a> <a target=\"_blank\" href=\"/assets/images/register_on_imgur_2.png\"><i class=\"fa fa-picture-o\" aria-hidden=\"true\"></i></a>",
+      "inputs": [
+        {
+          "name": "Client ID",
+          "input": "clientid",
+          "type": "text"
+        },
+        {
+          "name": "Client Secret",
+          "input": "clientsecret",
+          "type": "password"
+        },
+        {
+          "name": "Username",
+          "input": "username",
+          "type": "text"
+        },
+        {
+          "name": "Password",
+          "input": "password",
+          "type": "password"
+        }
+      ]
+    },
+    "status": true,
+    "data": {},
+    "account_support": true,
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days"
+  },
+  {
+    "server": "Bitly",
+    "link": "http://bit.ly",
+    "shortcuts": [
+      "bit.ly"
+    ],
+    "extra": {
+      "type": 3
+    },
+    "status": false
+  },
+  {
+    "server": "tinyurl.com",
+    "link": "http://tinyurl.com",
+    "shortcuts": [
+      "tinyurl.com"
+    ],
+    "extra": {
+      "type": 3
+    },
+    "status": false
+  },
+  {
+    "server": "streamango.com",
+    "link": "http://www.streamango.com",
+    "shortcuts": [
+      "streamango.com"
+    ],
+    "status": false,
+    "account_support": true,
+    "extra": {
+      "type": 2,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Use <b><u>'API-Login'</u></b> And <b><u>'API-Key'</u></b> instead of <b><u>'Username'</u></b> And <b><u>'Password'</u></b>, you can get it here : <a target=\"_blank\" href=\"https://streamango.com/account#usersettings\"><b>API Login/Key</b></a>",
+      "inputs": [
+        {
+          "name": "API-Login",
+          "input": "apilogin",
+          "type": "text"
+        },
+        {
+          "name": "API-Key",
+          "input": "apikey",
+          "type": "password"
+        }
+      ]
+    },
+    "data": {},
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days"
+  },
+  {
+    "server": "Tiny.cc",
+    "link": "http://tiny.cc",
+    "shortcuts": [
+      "tiny.cc"
+    ],
+    "extra": {
+      "type": 3
+    },
+    "status": false
+  },
+  {
+    "server": "is.gd",
+    "link": "http://is.gd",
+    "shortcuts": [
+      "is.gd"
+    ],
+    "extra": {
+      "type": 3
+    },
+    "status": false
+  },
+  {
+    "server": "goo.gl",
+    "link": "http://goo.gl",
+    "shortcuts": [
+      "goo.gl"
+    ],
+    "extra": {
+      "type": 3
+    },
+    "status": false
+  },
+  {
+    "server": "vidcloud.co",
+    "link": "http://www.vidcloud.co",
+    "shortcuts": [
+      "vidcloud.co"
+    ],
+    "status": true,
+    "account_support": true,
+    "extra": {
+      "type": 2,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Use <b><u>'API-Login'</u></b> And <b><u>'API-Key'</u></b> instead of <b><u>'Username'</u></b> And <b><u>'Password'</u></b>, you can get it here : <a target=\"_blank\" href=\"https://streamango.com/account#usersettings\"><b>API Login/Key</b></a>",
+      "inputs": [
+        {
+          "name": "API-Login",
+          "input": "apilogin",
+          "type": "text"
+        },
+        {
+          "name": "API-Key",
+          "input": "apikey",
+          "type": "password"
+        }
+      ]
+    },
+    "data": {},
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days"
+  },
+  {
+    "server": "t.co",
+    "link": "http://t.co",
+    "shortcuts": [
+      "t.co"
+    ],
+    "extra": {
+      "type": 3
+    },
+    "status": false
+  },
+  {
+    "server": "imgbox.com",
+    "link": "https://imgbox.com",
+    "shortcuts": [
+      "imgbox.com"
+    ],
+    "extra": {
+      "type": 4,
+      "info": "",
+      "inputs": [
+        {
+          "name": "Email / Username",
+          "input": "username",
+          "type": "text"
+        },
+        {
+          "name": "Password",
+          "input": "password",
+          "type": "password"
+        }
+      ]
+    },
+    "status": true,
+    "data": {},
+    "account_support": true,
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days"
+  },
+  {
+    "server": "shorte.st",
+    "link": "https://shorte.st",
+    "shortcuts": [
+      "shorte.st"
+    ],
+    "extra": {
+      "type": 3,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Use <b><u>'API token'</u></b> instead of <b><u>'Username'</u></b> And <b><u>'Password'</u></b>, you can get it here : <a target=\"_blank\" href=\"https://shorte.st/tools/api?user-type=new\"><b>API Token</b></a>",
+      "inputs": [
+        {
+          "name": "API token",
+          "input": "apitoken",
+          "type": "password"
+        }
+      ]
+    },
+    "status": true,
+    "data": {},
+    "account_support": true,
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days"
+  },
+  {
+    "server": "pixhost.to",
+    "link": "https://pixhost.to",
+    "shortcuts": [
+      "pixhost.to"
+    ],
+    "extra": {
+      "type": 4,
+      "info": "",
+      "inputs": []
+    },
+    "data": {},
+    "status": true,
+    "account_support": true,
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days"
+  },
+  {
+    "server": "mixdrop.co",
+    "link": "https://mixdrop.co",
+    "shortcuts": [
+      "mixdrop.co"
+    ],
+    "extra": {
+      "type": 2,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Use <b><u>'API E-Mail'</u></b> AND <b><u>'API Key'</u></b>, you can get them here : <a target=\"_blank\" href=\"https://mixdrop.co/api\"><b>API Email/Key</b></a>",
+      "inputs": [
+        {
+          "name": "API Email",
+          "input": "apiemail",
+          "type": "text"
+        },
+        {
+          "name": "API Key",
+          "input": "apikey",
+          "type": "password"
+        }
+      ]
+    },
+    "status": true,
+    "data": {},
+    "account_support": true,
+    "added": "2019-11-03T13:06:41.687Z",
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "storage_time": "180 days"
+  },
+  {
+    "server": "verystream.com",
+    "account_support": true,
+    "added": "2019-11-03T13:06:41.687Z",
+    "extra": {
+      "type": 2,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Use <b><u>'API-ID'</u></b> And <b><u>'API-Key'</u></b> instead of <b><u>'Username'</u></b> And <b><u>'Password'</u></b>, you can get it here : <a target=\"_blank\" href=\"https://verystream.com/panel#settings\"><b>API ID/Key</b></a>",
+      "inputs": [
+        {
+          "name": "API-ID",
+          "input": "api_id",
+          "type": "text"
+        },
+        {
+          "name": "API-Key",
+          "input": "api_key",
+          "type": "password"
+        }
+      ]
+    },
+    "link": "http://verystream.com",
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "shortcuts": [
+      "verystream.com"
+    ],
+    "status": false,
+    "storage_time": "180 days",
+    "data": {}
+  },
+  {
+    "server": "anonfile.com",
+    "account_support": true,
+    "added": "2019-11-03T13:06:41.687Z",
+    "extra": {
+      "type": 1,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Use <b><u>'API-Key'</u></b> instead of <b><u>'Username'</u></b> And <b><u>'Password'</u></b>, you can get it here : <a target=\"_blank\" href=\"https://anonfile.com/docs/api\"><b>API-Key</b></a>",
+      "inputs": [
+        {
+          "name": "API-Key",
+          "input": "apikey",
+          "type": "password"
+        }
+      ]
+    },
+    "link": "http://anonfile.com",
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "shortcuts": [
+      "anonfile.com"
+    ],
+    "status": true,
+    "storage_time": "180 days",
+    "data": {}
+  },
+  {
+    "server": "onlystream.tv",
+    "account_support": true,
+    "added": "2019-11-03T13:06:41.687Z",
+    "extra": {
+      "type": 2,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Use <b><u>'API-Key'</u></b> instead of <b><u>'Username'</u></b> And <b><u>'Password'</u></b>, you can get it here : <a target=\"_blank\" href=\"https://onlystream.tv/?op=my_api\"><b>API Key</b></a>",
+      "inputs": [
+        {
+          "name": "API-Key",
+          "input": "apikey",
+          "type": "password"
+        }
+      ]
+    },
+    "link": "https://onlystream.tv",
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "shortcuts": [
+      "onlystream.tv"
+    ],
+    "status": true,
+    "storage_time": "180 days",
+    "data": {}
+  },
+  {
+    "server": "vidoza.net",
+    "account_support": true,
+    "added": "2019-11-03T13:06:41.687Z",
+    "extra": {
+      "type": 2,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Use <b><u>'Api Token'</u></b> instead of <b><u>'Username'</u></b> And <b><u>'Password'</u></b>, you can find it in <u>Account Settings</u> in the User Panel : <a target=\"_blank\" href=\"https://vidoza.net/?op=my_account\"><b>API Token</b></a>",
+      "inputs": [
+        {
+          "name": "API-Token",
+          "input": "token",
+          "type": "password"
+        }
+      ]
+    },
+    "link": "https://vidoza.net",
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "shortcuts": [
+      "vidoza.net"
+    ],
+    "status": true,
+    "storage_time": "180 days",
+    "data": {}
+  },
+  {
+    "server": "saruch.co",
+    "account_support": true,
+    "added": "2019-11-03T13:06:41.687Z",
+    "extra": {
+      "type": 2,
+      "info": "",
+      "inputs": [
+        {
+          "name": "Email",
+          "input": "email",
+          "type": "text"
+        },
+        {
+          "name": "Password",
+          "input": "password",
+          "type": "password"
+        }
+      ]
+    },
+    "link": "https://saruch.co",
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "shortcuts": [
+      "saruch.co"
+    ],
+    "status": false,
+    "storage_time": "180 days",
+    "data": {}
+  },
+  {
+    "server": "keep2share.cc",
+    "account_support": true,
+    "added": "2019-11-03T13:06:41.687Z",
+    "extra": {
+      "type": 1,
+      "info": "",
+      "inputs": [
+        {
+          "name": "Access Token",
+          "input": "token",
+          "type": "password"
+        }
+      ]
+    },
+    "link": "https://k2s.cc",
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "shortcuts": [
+      "keep2share.cc",
+      "k2s.cc"
+    ],
+    "status": true,
+    "storage_time": "180 days",
+    "data": {}
+  },
+  {
+    "server": "gounlimited.to",
+    "account_support": true,
+    "added": "2019-11-03T13:06:41.687Z",
+    "extra": {
+      "type": 2,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Use <b><u>'API-Key'</u></b> instead of <b><u>'Username'</u></b> And <b><u>'Password'</u></b>, you can get it here : <a target=\"_blank\" href=\"https://gounlimited.to/?op=my_account\"><b>API Key</b></a>",
+      "inputs": [
+        {
+          "name": "API-Key",
+          "input": "apikey",
+          "type": "password"
+        }
+      ]
+    },
+    "link": "https://gounlimited.to",
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "shortcuts": [
+      "gounlimited.to"
+    ],
+    "status": true,
+    "storage_time": "180 days",
+    "data": {}
+  },
+  {
+    "server": "katfile.com",
+    "account_support": true,
+    "added": "2019-11-03T13:06:41.687Z",
+    "extra": {
+      "type": 1,
+      "info": "",
+      "inputs": [
+        {
+          "name": "Username",
+          "input": "username",
+          "type": "text"
+        },
+        {
+          "name": "Password",
+          "input": "password",
+          "type": "password"
+        }
+      ]
+    },
+    "link": "https://katfile.com",
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "shortcuts": [
+      "katfile.com"
+    ],
+    "status": true,
+    "storage_time": "180 days",
+    "data": {}
+  },
+  {
+    "server": "dropapk.to",
+    "account_support": true,
+    "added": "2019-11-03T13:06:41.687Z",
+    "extra": {
+      "type": 1,
+      "info": "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Use <b><u>'API-Key'</u></b> instead of <b><u>'Username'</u></b> And <b><u>'Password'</u></b>, you can get it here : <a target=\"_blank\" href=\"https://dropapk.to/?op=my_account\"><b> Configurations > Generate API Key</b></a>",
+      "inputs": [
+        {
+          "name": "API-Key",
+          "input": "apikey",
+          "type": "password"
+        }
+      ]
+    },
+    "link": "https://dropapk.to",
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "shortcuts": [
+      "dropapk.to"
+    ],
+    "status": true,
+    "storage_time": "180 days",
+    "data": {}
+  },
+  {
+    "server": "clipwatching.com",
+    "account_support": true,
+    "added": "2019-11-03T13:06:41.687Z",
+    "extra": {
+      "type": 2,
+      "info": "",
+      "inputs": [
+        {
+          "name": "Username",
+          "input": "username",
+          "type": "text"
+        },
+        {
+          "name": "Password",
+          "input": "password",
+          "type": "password"
+        }
+      ]
+    },
+    "link": "https://clipwatching.com",
+    "max_upload_size_free": 3221225472,
+    "max_upload_size_premium": 6442450944,
+    "shortcuts": [
+      "clipwatching.com"
+    ],
+    "status": true,
+    "storage_time": "180 days",
+    "data": {}
+  }
+]

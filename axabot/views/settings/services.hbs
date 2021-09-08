@@ -1,0 +1,287 @@
+<div class="ibox">
+    <div class="ibox-title">
+        <h5><i class="fa fa-server"></i>
+            Settings / List of Services</h5>
+    </div>
+    <div class="ibox-content">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="tabs-container">
+                    {{> settings/tabs }}
+                    <div class="tab-content">
+                        <div id="torrents_settings" class="tab-pane active">
+                            <div class="panel-body">
+                                <form id="preferences_form" method="POST">
+                                    <fieldset class="form-horizontal">
+                                        <p class="pull-right">
+                                            <h3 class="label label-primary font-normal m-b-xs" style="font-size:12px;">
+                                                <i class="fa fa-pie-chart" aria-hidden="true"></i>
+                                                Server Monitoring </h3>
+                                        </p>
+                                        <div class="form-group">
+                                            <label class="col-sm-1 control-label"></label>
+                                            <div class="col-sm-12">
+                                                <table class="table" style="border-top:0px;">
+                                                    <tr>
+                                                        <td width="33%">
+                                                            <div class="ibox-content">
+                                                                <h5>Disk Usage</h5>
+                                                                <h2>{{{stats.disk.percent}}}
+                                                                    <span class="font12-srv">
+                                                                        <span class="pull-right">
+                                                                            {{{stats.disk.used}}}</span>
+                                                                    </span>
+                                                                </h2>
+                                                                <div class="progress progress-mini">
+                                                                    <div style="width:{{{stats.disk.percent}}};"
+                                                                        class="progress-bar {{{vProgressColor stats.disk.percent}}}">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="m-t-sm small">
+                                                                    Total Disk size <u>{{{stats.disk.size}}}</u>, Remain
+                                                                    available space
+                                                                    <u>{{{stats.disk.available}}}</u>
+                                                                </div>
+                                                            </div>
+                                                            <button class="btn btn-xs incofd"
+                                                                href="javascript:void(0);"><i class="fa fa-trash"></i>
+                                                                Clear Incomplete Torrents</button><br>
+                                                            <button data-rpath="downloads" style="margin-top: 4px;"
+                                                                class="btn btn-xs _clearfds"
+                                                                href="javascript:void(0);"><i class="fa fa-trash"></i>
+                                                                Empty Downloads Folder</button><br>
+                                                        </td>
+                                                        <td width="33%">
+                                                            <div class="ibox-content">
+                                                                <h5>CPU Usage</h5>
+                                                                <h2 class="sktcpu">{{{stats.memory.cpu}}}</h2>
+                                                                <div class="progress progress-mini">
+                                                                    <div style="width:{{{stats.memory.cpu}}};"
+                                                                        class="sktprog progress-bar progress-bar-primary">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="m-t-sm small">
+                                                                    Used RAM <u
+                                                                        class="skturam">{{{stats.memory.used}}}</u>
+                                                                    &nbsp;-&nbsp; Total Server RAM <u
+                                                                        class="sktram">{{{stats.memory.total}}}</u>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td width="33%">
+                                                            <div class="ibox-content">
+                                                                <h5>Bandwidth</h5>
+                                                                <h2>{{{stats.bandwidth.percent}}}
+                                                                    <span class="font12-srv">
+                                                                        <span class="pull-right">
+                                                                            <span class="">≈
+                                                                                {{{stats.bandwidth.bandwidth_max}}} /
+                                                                                Month
+                                                                            </span>
+                                                                            <b class="text-danger">*</b></span>
+                                                                    </span>
+                                                                </h2>
+                                                                <div class="progress progress-mini">
+                                                                    <div style="width: {{{stats.bandwidth.percent}}}%;"
+                                                                        class="progress-bar progress-bar-primary"></div>
+                                                                </div>
+                                                                <div class="m-t-sm small">
+                                                                    <i class="fa fa-upload"></i>
+                                                                    {{{stats.bandwidth.upload}}} / <i
+                                                                        class="fa fa-download"></i>
+                                                                    {{{stats.bandwidth.download}}}<br>
+                                                                    Server bandwidth consumed on <u
+                                                                        class="font12-srv">{{{stats.bandwidth._date}}}</u><br>
+                                                                    <span class="pull-left">
+                                                                        <b class="text-danger">*</b> Fair Usage
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div>
+                                            <h3 class="label label-success font-normal m-b-xs" style="font-size:12px;">
+                                                <i class="fa fa-cloud-upload" aria-hidden="true"></i>
+                                                FTP </h3>
+                                        </div>
+                                        <div data-type="ftp" class="form-group">
+                                            <label class="col-sm-1 control-label"></label>
+                                            <div class="col-sm-6">
+                                                <p>
+                                                    <p><b>Hostname :</b> {{this.preferences.vsftpd.hostname}} </p>
+                                                    <p><b>Port :</b> {{this.preferences.vsftpd.port}} </p>
+                                                    <p><b>Username :</b> {{this.preferences.vsftpd.username}} </p>
+                                                    <p><b>Password :</b> <span
+                                                            class="mhpassword">•••••••••••••••••</span> <a
+                                                            class="srvpass" href="javascript:;"><i
+                                                                class="fa fa-eye-slash" aria-hidden="true"></i></a></p>
+                                                </p>
+                                            </div>
+                                            <div class="pull-right col-sm-6"><a class="gnpass btn btn-default btn-sm"><i
+                                                        class="fa fa-unlock-alt" aria-hidden="true"></i> Generate New
+                                                    Password</a></div>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div>
+                                            <h3 class="label label-success font-normal m-b-xs" style="font-size:12px;">
+                                                <i class="fa fa-magnet" aria-hidden="true"></i>
+                                                RuTorrent </h3>
+                                            <span class="pull-right">
+                                                <a href="/rutorrent" target="_blank">Access Rutorrent <i
+                                                        class="fa fa-link"></i></a>
+                                            </span>
+                                        </div>
+                                        <div data-type="rutorrent" class="form-group">
+                                            <label class="col-sm-1 control-label"></label>
+                                            <div class="col-sm-6">
+                                                <p>
+                                                    <p><b>Username : </b> {{this.preferences.rtorrent.username}} </p>
+                                                    <p><b>Password :</b> <span
+                                                            class="mhpassword">•••••••••••••••••</span> <a
+                                                            class="srvpass" href="javascript:;"><i
+                                                                class="fa fa-eye-slash" aria-hidden="true"></i></a></p>
+                                                </p>
+                                            </div>
+                                            <div class="pull-right col-sm-6"><a class="gnpass btn btn-default btn-sm"><i
+                                                        class="fa fa-unlock-alt" aria-hidden="true"></i> Generate New
+                                                    Password</a></div>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div>
+                                            <h3 class="label label-success font-normal m-b-xs" style="font-size:12px;">
+                                                <i class="fa fa-upload" aria-hidden="true"></i>
+                                                {{{BOTNAME}}} </h3>
+                                        </div>
+                                        <div class="form-group" data-type="bot">
+                                            <label class="col-sm-1 control-label"></label>
+                                            <div class="col-sm-6">
+                                                <p>
+                                                    <p><b>Username :</b> {{this.preferences.bot.username}} </p>
+                                                    <p><b>Password :</b> <span
+                                                            class="mhpassword">•••••••••••••••••</span> <a
+                                                            class="srvpass" href="javascript:;"><i
+                                                                class="fa fa-eye-slash" aria-hidden="true"></i></a></p>
+                                                </p>
+                                            </div>
+                                            <div class="pull-right col-sm-6">
+                                                <a class="gnpass btn btn-default btn-sm"><i class="fa fa-unlock-alt"
+                                                        aria-hidden="true"></i> Generate New Password</a>
+                                            </div>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div>
+                                            <h3 class="label label-success font-normal m-b-xs" style="font-size:12px;">
+                                                <i class="fa fa-bug" aria-hidden="true"></i>
+                                                Services </h3>
+                                        </div>
+                                        <center>
+                                            <table class="table" style="width:80%">
+                                                <tr>
+                                                    <td width="3%"></td>
+                                                    <td width="20%"><i class="fa fa-upload"></i> FTP Server</td>
+                                                    <td width="10%" align="center">
+                                                        {{{servicestatus this.preferences.vsftpd.status}}}
+                                                    </td>
+                                                    <td>{{{this.preferences.vsftpd.runtime}}}</td>
+                                                    <td width="30%">
+                                                        <a data-type="ftp" class="restartsrv btn btn-default btn-sm"><i
+                                                                class="fa fa-repeat" aria-hidden="true"></i> Restart</a>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="3%"></td>
+                                                    <td width="20%"><i class="text-danger fa fa-magnet"></i> Rtorrent
+                                                    </td>
+                                                    <td width="10%" align="center">
+                                                        {{{servicestatus this.preferences.rtorrent.status}}}
+                                                    </td>
+                                                    <td> {{{this.preferences.rtorrent.runtime}}}</td>
+                                                    <td width="30%">
+                                                        <a data-type="rutorrent"
+                                                            class="restartsrv btn btn-default btn-sm"><i
+                                                                class="fa fa-repeat" aria-hidden="true"></i> Restart</a>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="3%"></td>
+                                                    <td width="20%"><i class="text-success fa fa-bolt"></i> Axabot</td>
+                                                    <td width="10%" align="center">
+                                                        {{{servicestatus this.preferences.bot.status}}}
+                                                    </td>
+                                                    <td>{{{this.preferences.bot.runtime}}}</td>
+                                                    <td width="30%">
+                                                        <a data-type="bot" class="restartsrv btn btn-default btn-sm"><i
+                                                                class="fa fa-repeat" aria-hidden="true"></i> Restart</a>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="3%"></td>
+                                                    <td width="20%"><i class="text-warning fa fa-server"></i> Server
+                                                    </td>
+                                                    <td width="10%" align="center">
+                                                        <label class="label label-primary">Online</label>
+                                                    </td>
+                                                    <td></td>
+                                                    <td width="30%">
+                                                        <a data-type="server"
+                                                            class="restartsrv btn btn-default btn-sm"><i
+                                                                class="fa fa-repeat" aria-hidden="true"></i> Reboot</a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </center>
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <div class="pull-right">
+                                                <a data-toggle="modal" data-target="#probreport"
+                                                    class="btn btn-danger btn-sm">
+                                                    <i class="fa fa-bug" aria-hidden="true"></i>
+                                                    Encountered a problem? Report it </a>
+                                                <a id="checkupdate" class="btn btn-success btn-sm">
+                                                    <span class="nload">
+                                                        Check for Update
+                                                    </span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal inmodal fade" id="probreport" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h5 class="modal-title">Encountered a problem ?</h5>
+            </div>
+            <div class="modal-body">
+                <form method="POST" class="form-horizontal">
+                    <div class="form-group">
+                        <textarea type="text" rows="8" name="desprob" id="desprob" class="form-control"></textarea>
+                        <span class="help-block m-b-none">
+                            <span class="text-danger">*</span> Please, Describe your problem as detailed as
+                            possible.</span>
+                        </span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-white btn-xs" data-dismiss="modal">Cancel</button>
+                <button type="button" id="sendreport" class="btn btn-primary btn-xs"><i class="fa fa-send"></i> Send
+                    Report</button>
+            </div>
+        </div>
+    </div>
+</div>

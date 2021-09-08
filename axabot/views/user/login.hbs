@@ -1,0 +1,29 @@
+<div class="middle-box text-center loginscreen animated fadeInDown">
+    <div>
+        <div>
+            <h1 class="logo-name"><img src="/assets/img/logo_l.png"></h1>
+        </div>
+        <h3>{{ BOTNAME }}</h3>
+        <p>Login to Access Your Dashboard.</p>
+        {{#if hasError}}
+            <div class="alert alert-danger alert-dismissable">
+                {{#each messages}}
+                    <center><i class="md md-warning"></i> {{this}}</center>
+                {{/each}}
+            </div>
+        {{/if}}
+        <form class="m-t" role="form" action="/user/login" method="POST">
+            <div class="form-group">
+                <input type="text" name="username" id="username" class="form-control" value=""
+                    placeholder="Username...">
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" id="password" class="form-control" placeholder="Password"
+                    required="">
+            </div>
+            <button type="submit" class="btn btn-success block full-width m-b"><i class="fa fa-lock"></i> Login</button>
+            <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+        </form>
+        <p class="m-t"> <small>{{ BOTNAME }} &copy; 2019</small> </p>
+    </div>
+</div>

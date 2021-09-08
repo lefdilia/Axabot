@@ -1,0 +1,101 @@
+<div class="ibox">
+    <div class="ibox-title">
+        <h5><i class="fa fa-cogs"></i>
+            Settings / {{{BOTNAME}}} preferences</h5>
+    </div>
+    <div class="ibox-content">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="tabs-container">
+                    {{> settings/tabs }}
+                    <div class="tab-content">
+                        <div id="torrents_settings" class="tab-pane active">
+                            <div class="panel-body">
+                                <form id="preferences_form" method="POST">
+                                    <fieldset class="form-horizontal">
+                                        <div>
+                                            <h3 class="label label-primary font-normal m-b-xs" style="font-size:12px;">
+                                                <i class="fa fa-magnet"></i>
+                                                Torrents </h3>
+                                        </div>
+                                        <div class="form-group"><label class="col-sm-2 control-label"> Torrent
+                                                Types:</label>
+                                            <div class="col-sm-6">
+                                                <input class="tagsinput form-control" value="{{{ torrent_types }}}"
+                                                    name="torrent_types" type="text" />
+                                            </div>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="">
+                                            <h3 class="label label-primary font-normal m-b-xs" style="font-size:12px;">
+                                                <i class="fa fa-rss"></i>
+                                                Feeds</h3>
+                                        </div>
+                                        <div class="form-group"><label class="col-sm-2 control-label"> Feed
+                                                Types:</label>
+                                            <div class="col-sm-6">
+                                                <input type="text" name="feed_types" class="tagsinput form-control"
+                                                    value="{{{ feed_types }}}">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Ping interval (Minutes):</label>
+                                            <div class="col-sm-2">
+                                                <input class="nmspin4" name="ping_interval" type="text" value="5">
+                                            </div>
+                                            <i class="Mutedinfo">* The default interval ping of feed is 5 Minutes</i>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <h3 class="label label-primary font-normal m-b-xs" style="font-size:12px;"><i
+                                                class="fa fa-magnet"></i>
+                                            RuTorrent</h3>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Upload Rate (KB/s):</label>
+                                            <div class="col-sm-2">
+                                                <input class="nmspin" name="upload_rate" type="text" value="15">
+                                            </div>
+                                            <i class="Mutedinfo">* `0` for Unlimited</i>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Download Rate (KB/s):</label>
+                                            <div class="col-sm-2">
+                                                <input class="nmspin" name="download_rate" type="text" value="50">
+                                            </div>
+                                            <i class="Mutedinfo">* `0` for Unlimited</i>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Seed Time (Secondes):</label>
+                                            <div class="col-sm-2">
+                                                <input class="nmspin5" name="seed_time" type="text" value="3600">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Maximum Downloads:</label>
+                                            <div class="col-sm-2">
+                                                <input class="nmspin" name="max_downloads" type="text" value="10">
+                                            </div>
+                                            <i class="Mutedinfo">* Maximum number of simultaneous downloads</i>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Maximum Uploads:</label>
+                                            <div class="col-sm-2">
+                                                <input class="nmspin" name="max_uploads" type="text" value="5">
+                                            </div>
+                                            <i class="Mutedinfo">* Maximum number of simultaneous uploads</i>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <div class="col-sm-4 col-sm-offset-2">
+                                                <a class="btn btn-success" id="pref_save">Save changes</a>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

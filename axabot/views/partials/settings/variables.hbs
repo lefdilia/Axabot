@@ -1,0 +1,153 @@
+<div class="pre-scrollable">
+        <p>
+                <h3><i class="fa fa-cube" aria-hidden="true"></i> Templates Extra Features</h3>
+        </p>
+        {{!--  --}}
+        <ul>
+                <p>
+                        <li><code class="vbold">[#if]Runtime : {mt_runtime}[/if]</code> </li>
+                        <span class="noselect"> - Condition to prevent empty tags. In this example, Will show the
+                                <u>Runtime</u>
+                                if
+                                only
+                                available
+                                <small class="text-muted"> <b>( Can be used on all Tags )</b> </small>
+                        </span>
+                </p>
+                <p>
+                        <li><code class="vbold">{gsample}(anchor=Download {mt_host})</code></li>
+                        <span class="noselect"> - To change the <u>Anchor Text</u> on <u>Samples</u> or <u>Download
+                                        Links</u>
+                                <small class="text-muted"> ( <u> Ex : Download Uptobox.com </u> ) </small>
+                        </span>
+                        &nbsp;&nbsp;
+                        <br><br>
+                        <ul>
+                                <li>
+                                        <code class="vbold">(anchor=Download {mt_title} {mt_host})</code>
+                                        <span class="noselect"> - <u>The Anchor</u> will be the <u>title</u> And
+                                                <u>host</u>
+                                                <small class="text-muted"> ( <u>Ex : Download Pokemon Origins
+                                                                Uptobox.com</u> )
+                                                </small>
+                                        </span>
+                                </li>
+                                <li>
+                                        <code class="vbold">(anchor=host)</code>
+                                        <span class="noselect"> - <u>The Anchor</u> will be the <u>Host</u>
+                                                <small class="text-muted"> ( <u>Ex : Uptobox.com</u> ) </small>
+                                        </span>
+                                </li>
+                                <li>
+                                        <code class="vbold">(anchor=link)</code>
+                                        <span class="noselect"> - <u>The Anchor</u> will be the <u>Link</u>
+                                                <small class="text-muted"> ( <u>Ex :
+                                                                https://uptobox.com/az6btgdlc23c</u> )
+                                                </small>
+                                        </span>
+                                        </br></br> </li>
+                        </ul>
+                </p>
+                <p>
+                        <li><code class="vbold">{mt_poster}(*{pixhost_to})</code></li>
+                        <li><code class="vbold">{mt_poster}(*pixhost_to)</code></li>
+                        <li><code class="vbold">{mt_poster}(width=150|height=220|*imgur_com)</code></li>
+                        <span class="noselect"> - To change <u>Width</u> And <u>Height</u> of images
+                                <small class="text-muted"> <b>( Can be used on all images : [gthumbnail, gposter, gnfo,
+                                                mt_poster_original, mt_poster ] )</b> </small>
+                        </span>
+                        &nbsp;&nbsp;
+                        <br><br>
+                        <ul>
+                                <li>
+                                        <code class="vbold">(height=100)</code>
+                                        <span class="noselect"> - Only <u>Height</u> will be changed
+                                        </span>
+                                </li>
+                                <li>
+                                        <code class="vbold">(width=100)</code>
+                                        <span class="noselect"> - Only <u>Width</u> will be changed
+                                        </span>
+                                </li>
+                                <li>
+                                        <code class="vbold">(*imgur_com)</code>
+                                        <span class="noselect"> - Will use only Image with selected host
+                                                <small class="text-muted"> ( <u>Ex :
+                                                                https://i.imgur.com/BxoH4IO.png</u>)
+                                                </small>
+                                        </span>
+                                        </br></br>
+                                </li>
+                        </ul>
+                </p>
+                <p>
+                        <li><code class="vbold">{ts_links}</code> </li>
+                        <span class="noselect"> - Array of objects. Contain Upload Links :
+                                <span>[{"<b>host</b>","<b>filename</b>","<b>filenameRD
+                                                (Random)</b>","<b>size</b>","<b>link</b>"}]</span>
+                        </span>
+                </p>
+                <p>
+                        <li><code class="vbold">{TID}</code> </li>
+                        <span class="noselect"> - <u>Unique alphanumeric ID</u> for each task (12-24 Characters)
+                                <u>Runtime</u>
+                                <small class="text-muted"> ( Ex : 5db43579bab9a085c5c03239 ) </small>
+                        </span>
+                </p>
+        </ul>
+        <p>&nbsp;</p>
+        <p>
+                <h3><i class="fa fa-cubes" aria-hidden="true"></i> List of variables</h3>
+        </p>
+        {{#each this.variables}}
+                <h4 style="font-size:1.6rem;">{{@key}}</h4>
+                <br>
+                {{#each this}}
+                        <p><a href="javascript:;" class="ltag" data-tag="{{this.name}}"
+                                        data-example="{{this.extra.example}}" class="btn btn-xs btn-white"><i
+                                                class="fa fa-plus"></i></a><code class="vbold">{{this.name}}</code>
+                                {{#if this.extra.title}}
+                                        <span class="noselect"> - {{this.extra.title}} </span>
+                                {{/if}}
+                                {{#if this.extra.example}}
+                                        <u><small><b>({{this.extra.example}})</b></small></u>
+                                {{/if}}
+                        </p>
+                        {{#each this.extra.childs}}
+                                <p>
+                                        <a href="javascript:;" class="ltag" data-tag="{{this}}"
+                                                data-example="{{this.extra.example}}" class="btn btn-xs btn-white"> <i
+                                                        class="fa fa-plus"></i> </a>
+                                        <code class="vbold">{{this}}</code>
+                                </p>
+                                {{#if @last}} <br>{{/if}}
+                        {{/each}}
+                        {{#if this.extra.mark}}
+                                <small class="text-muted">{{{this.extra.mark}}}</small>
+                                <p>&nbsp;</p>
+                        {{/if}}
+                {{/each}}
+                <p>
+                        <hr width="60%">
+                </p>
+        {{/each}}
+        <h3 style="font-size:2rem;">Links</h3>
+        <br>
+        <p><a href="javascript:;" class="ltag" data-tag="{download_links}" data-example=""
+                        class="btn btn-xs btn-white"><i class="fa fa-plus"></i></a><code
+                        class="vbold">{download_links}</code>
+                <span class="noselect"> - List of all Download links </span>
+        </p>
+        {{#each this.hosts}}
+                {{#each this}}
+                        <p>
+                                <a href="javascript:;" class="ltag" data-tag="{{this.name}}"
+                                        data-example="http://{{this.server}}/xxxxxx.file"
+                                        class="btn btn-xs btn-white"><i class="fa fa-plus"></i></a><code
+                                        class="vbold">{{this.name}}</code><span class="noselect"> - <span
+                                                class="text-capitalize">{{this.server}}</span>
+                        </p>
+                {{/each}}
+                <p>&nbsp;</p>
+        {{/each}}
+</div>

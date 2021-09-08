@@ -1,0 +1,426 @@
+[
+  {
+    "name": "{grelease}",
+    "parent": "Global",
+    "extra": {
+      "title": "Release title",
+      "example": "Captain Black 2017 WEBRip 720p YTS",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{gtype}",
+    "parent": "Global",
+    "extra": {
+      "title": "Release type",
+      "example": "TvShow",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{gsize}",
+    "parent": "Global",
+    "extra": {
+      "title": "Release size",
+      "example": "780 Mb",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{gmagnet}",
+    "parent": "Global",
+    "extra": {
+      "title": "Torrent magnet",
+      "example": "magnet:?xt=urn:btih:1af8...dd301782102bd&dn=Mothra+",
+      "mark": "<small class=\"text-danger\">*</small> `<u>gmagnet</u>` variable is not available for `<u>Private tracker</u>` (info-hash exposed to public)",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{gthumbnail}",
+    "parent": "Global",
+    "extra": {
+      "title": "Generated Thumbnail (MTN)",
+      "example": "https://i.imgur.com/VgsFixs.png",
+      "mark": "",
+      "childs": [
+        "{gthumbnail}(width=150)",
+        "{gthumbnail}(width=150|height=220)"
+      ]
+    },
+    "status": true
+  },
+  {
+    "name": "{gposter}",
+    "parent": "Global",
+    "extra": {
+      "title": "Uploaded Poster (Official)",
+      "example": "https://i.imgur.com/1ACE69n.png",
+      "mark": "",
+      "childs": [
+        "{gposter}(width=150)",
+        "{gposter}(width=150|height=220)"
+      ]
+    },
+    "status": true
+  },
+  {
+    "name": "{gnfo}",
+    "parent": "Global",
+    "extra": {
+      "title": "NFO Image",
+      "example": "https://i.imgur.com/1ACE69n.png",
+      "mark": "",
+      "childs": [
+        "{gnfo}(width=150)",
+        "{gnfo}(width=150|height=220)"
+      ]
+    },
+    "status": true
+  },
+  {
+    "name": "{gsample}",
+    "parent": "Global",
+    "extra": {
+      "title": "Video sample (≈2 minutes)",
+      "example": "https://openload.co/f/4rAkCrIPYIk/Prf4847287328787_Sample_.mp4",
+      "mark": "",
+      "childs": [
+        "{gsample}(link)"
+      ]
+    },
+    "status": false
+  },
+  {
+    "name": "{media_format}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Format",
+      "example": "Matroska / WebM",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{media_bitrate}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Bitrate",
+      "example": "709 kb/s",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{media_encoder}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Encoder",
+      "example": "Lavf57.81.100",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{video_duration}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Duration",
+      "example": "24 minutes 21 seconds",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{video_codec}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Video Codec",
+      "example": "H264 (High)",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{video_pixel_format}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Resolution",
+      "example": "640x480 [SAR 4:3 DAR 16:9]",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{video_aspect}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Aspect",
+      "example": "[SAR 4:3 - DAR 16:9]",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{video_frame_rate}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Frame Rate",
+      "example": "29.97 fps",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{video_size}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Video Size (file-size)",
+      "example": "143.8 MB",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{video_infos}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Video informations",
+      "example": "H264 (High), yuv420p (progressive), 640x480 [SAR 4:3 DAR 16:9], [SAR 4:3 - DAR 16:9], 29.97 fps",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{audio_channel_layout}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Channel Layout",
+      "example": "Stereo",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{audio_sample_rate}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Sample Rate",
+      "example": "48 kHz",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{audio_sample_fmt}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Sample fmt",
+      "example": "s16p (eng)",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{audio_codec}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Audio Codec",
+      "example": "MP3",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_title}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "title",
+      "example": "Back Roads",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_year}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "Year of release",
+      "example": "2015",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_runtime}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "Running time",
+      "example": "28 min",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_genres}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "Genres",
+      "example": "Documentary",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_summary}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "Storyline",
+      "example": "Heather Ewart swaps reporting from political corridors of power to...",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_source}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "Information source link",
+      "example": "https://www.themoviedb.org/tv/65405",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_poster}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "Poster & Cover",
+      "example": "https://i.imgur.com/vgL2WWU.jpg",
+      "mark": "",
+      "childs": [
+        "{mt_poster}(width=150)",
+        "{mt_poster}(width=150|height=220)"
+      ]
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_stars}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "Stars",
+      "example": "Louise Turley,Brigid Donovan...",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_rating}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "Rating",
+      "example": "6.8/10",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{download_links}",
+    "parent": "Links",
+    "extra": {
+      "title": "List of all Download links",
+      "example": "",
+      "mark": "",
+      "childs": []
+    },
+    "status": false
+  },
+  {
+    "name": "{audio_infos}",
+    "parent": "Media Information",
+    "extra": {
+      "title": "Audio informations",
+      "example": "MP3, stereo, 48 kHz, s16p (eng)",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_season}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "Season",
+      "example": "02",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_episode}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "Episode",
+      "example": "08",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_air_episode}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "Episode Air Date",
+      "example": "2019 09 09",
+      "mark": "",
+      "childs": []
+    },
+    "status": true
+  },
+  {
+    "name": "{mt_poster_original}",
+    "parent": "TV & Movies",
+    "extra": {
+      "title": "Original Poster",
+      "example": "http://image.tmdb.org/t/p/w500/saVYWIrvkRNcBhET1pKMPB4bXYa.jpg",
+      "mark": "",
+      "childs": [
+        "{mt_poster_original}(width=150)",
+        "{mt_poster_original}(width=150|height=220)"
+      ]
+    },
+    "status": true
+  }
+]

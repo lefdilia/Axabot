@@ -1,0 +1,399 @@
+<div class="ibox">
+    <div class="ibox-title">
+        <h5><i class="fa fa-cogs"></i>
+            Settings / Profiles</h5>
+    </div>
+    <div class="ibox-content">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="tabs-container">
+                    {{> settings/tabs }}
+                    <div class="tab-content">
+                        <div id="upload_profiles" class="tab-pane active">
+                            <div class="panel-body">
+                                <center>
+                                    <div class="table-responsive">
+                                        {{#if this.profiles}}
+                                            <table class="table table-striped table-hovered table" style="width:90%;">
+                                                <thead>
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>Profile</th>
+                                                        <th>
+                                                            <center>#Default</center>
+                                                        </th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {{#each this.profiles}}
+                                                        <tr id="{{this._id}}">
+                                                            <td style="width:1%;"> {{inc @index}}. </td>
+                                                            <td style="width:40%;"><span
+                                                                    class="line">{{this.name}}</span></td>
+                                                            <td style="width:30%;">
+                                                                <center>
+                                                                    {{{defaultbe}}}
+                                                                </center>
+                                                            </td>
+                                                            <td style="width:20%;">
+                                                                <span class="pull-right">
+                                                                    <a class="editprofile btn btn-success btn-xs"> <i
+                                                                            class="fa fa-pencil"></i></a>
+                                                                    <a class="trashprofile btn btn-danger btn-xs"> <i
+                                                                            class="fa fa-trash"></i></a>
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    {{/each}}
+                                                </tbody>
+                                            </table>
+                                        {{/if}}
+                                    </div>
+                                </center>
+                                <center>
+                                    <div style="width:70%;" class="alert alert-warning"><i
+                                            class="fa fa-exclamation-triangle"></i>
+                                        If a
+                                        used profile was
+                                        deleted by error, the process
+                                        will choose the default profile</div>
+                                </center>
+                                <div class="hr-line-dashed"></div>
+                                <form id="profiles_form" method="POST">
+                                    <fieldset class="form-horizontal">
+                                        <div class="form-group"><label class="col-sm-2 control-label"> Profile
+                                                name:</label>
+                                            <div class="col-sm-6">
+                                                <input type="text" name="profile_name" class="form-control"
+                                                    placeholder="...">
+                                            </div>
+                                        </div>
+                                        <br>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"></label>
+                                            <div class="col-sm-10">
+                                                <input type="checkbox" name="default_profile" class="js-switch" />
+                                                <label class="sgWeight">
+                                                    Default Profile </label>
+                                                <br>
+                                                <br>
+                                                <input type="checkbox" name="random_filename" class="js-switch" />
+                                                <label class="sgWeight">
+                                                    Use random filename instead of original </label>
+                                                <br>
+                                                <br>
+                                                <input type="checkbox" name="prefix_filename" class="js-switch" />
+                                                <label class="sgWeight">
+                                                    Add Prefix before Filename </label>
+                                                <div style="display:none;" id="prefix_str"><br><label class="sgWeight">
+                                                        <input type="text" name="prefix_str" placeholder="_AutoBot__"
+                                                            class="form-control"></label>
+                                                </div>
+                                                <br>
+                                                <br>
+                                                <input type="checkbox" name="start_upload_auto" class="js-switch" />
+                                                <label class="sgWeight">
+                                                    Start upload automatically
+                                                </label>
+                                                <br>
+                                                <br>
+                                                <input type="checkbox" name="auto_post" class="js-switch" />
+                                                <label class="sgWeight">
+                                                    AutoPost </label>
+                                                <br>
+                                                <div style="display:none;" id="forced_auto_post">
+                                                    <br>
+                                                    <input type="checkbox" name="forced_auto_post" class="js-switch" />
+                                                    <label class="sgWeight">
+                                                        Forced Autopost </label>
+                                                    <b class="small Mutedinfo pull-right">*<u>Forced Autopost</u> : Post
+                                                        With / Without Topic data</b>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group"><label class="col-sm-2 control-label"> Templates
+                                                :</label>
+                                            <div class="col-sm-4">
+                                                <select name="stemplates" id="stemplates" class="form-control">
+                                                    {{#each this.templates}}
+                                                        <option value="{{this.name}}">{{this.name}}</option>
+                                                    {{/each}}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group"><label class="col-sm-2 control-label"> API :</label>
+                                            <div class="col-sm-4">
+                                                <select name="stapi" id="stapi" class="form-control">
+                                                    {{#each this.apis}}
+                                                        <option value="{{this.name}}">{{this.name}}</option>
+                                                    {{/each}}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Hosts List:</label>
+                                            <div class="col-md-5 wizard-big">
+                                                <select name="hosts" class="form-control dual_select" multiple>
+                                                    {{#each this.hosts}}
+                                                        <option {{#unless this.status}} disabled class="selectdisabled"
+                                                            {{/unless}} value="{{this.server}}">{{this.server}}</option>
+                                                    {{/each}}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Link Shortener List:</label>
+                                            <div class="col-md-5 wizard-big">
+                                                <select name="shortners" class="form-control dual_select" multiple>
+                                                    {{#each this.shortener}}
+                                                        <option {{#unless this.status}} disabled class="selectdisabled"
+                                                            {{/unless}} value="{{this.server}}">{{this.server}}</option>
+                                                    {{/each}}
+                                                </select>
+                                            </div>
+                                            <br><span class="Mutedinfo"> - Only <b><u>One</u> Link Shortener</b>
+                                                from
+                                                the list
+                                                will be used</span>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Upload Topic Image :</label>
+                                            <div class="col-md-2">
+                                                <input name="upload_t_image" type="checkbox" class="js-switch" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Image Hosting List:</label>
+                                            <div class="col-md-5 wizard-big">
+                                                <select name="host_images" class="form-control dual_select" multiple>
+                                                    {{#each this.imageHosts}}
+                                                        <option {{#unless this.status}} disabled class="selectdisabled"
+                                                            {{/unless}} value="{{this.server}}">{{this.server}}</option>
+                                                    {{/each}}
+                                                </select>
+                                            </div>
+                                            <br><span class="Mutedinfo"> - <b>Nfo Image</b> And <b>Thumbnail</b> will
+                                                be uploaded to
+                                                Image Hosting<br>
+                                                - If `Upload Topic Images` is checked, <b>Cover
+                                                    (Topic Image) </b> will be uploaded as
+                                                well</span>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Create Sample :</label>
+                                            <div class="col-md-2">
+                                                <input name="sample_enabled" type="checkbox" class="js-switch" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Sample Hosting List:</label>
+                                            <div class="col-md-5 wizard-big">
+                                                <select name="host_sample" class="form-control dual_select" multiple>
+                                                    {{#each this.hosts}}
+                                                        <option {{#unless this.status}} disabled class="selectdisabled"
+                                                            {{/unless}} value="{{this.server}}">{{this.server}}</option>
+                                                    {{/each}}
+                                                </select>
+                                            </div>
+                                            <br><span class="Mutedinfo"> - Sample is a [ ≈2 minutes ] Video, will be
+                                                created for media File <br><b>(*.Mkv /
+                                                    *.Avi / *.Flv
+                                                    /*.Mp4)</b>
+                                            </span>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">RAR Compression :</label>
+                                            <div class="col-md-2">
+                                                <input name="rar_enabled" type="checkbox" class="js-switch" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">RAR Password:</label>
+                                            <div class="col-md-3"><input name="rar_password" type="text"
+                                                    class="form-control rarvi" placeholder="*******"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">RAR Comment:</label>
+                                            <div class="col-md-6">
+                                                <textarea class="form-control rarvi" rows="6"
+                                                    name="rar_comment"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Split Files Bigger than:</label>
+                                            <div class="col-md-3">
+                                                <input class="nmspin2" type="text" name="rar_split" value="0">
+                                            </div>
+                                        </div>
+                                        <br>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"></label>
+                                            <div class="col-md-3">
+                                                <div class="checkbox checkbox-primary">
+                                                    <input type="checkbox" name="rar_eqpart" checked>
+                                                    <label>Split to equal parts</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {{!-- Nfo Options --}}
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">NFO Process:</label>
+                                            <div class="col-md-1">
+                                                <input type="checkbox" name="nfo_process" class="js-switch" />
+                                                <br>
+                                                <br>
+                                            </div>
+                                            <span class="Mutedinfo"> - Convert NFO file to image (PNG)</span>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Upload Nfo Image:</label>
+                                            <div class="col-md-2">
+                                                <input name="upload_nfo_image" type="checkbox" class="js-switch" />
+                                            </div>
+                                        </div>
+                                        {{!-- Nfo Options --}}
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Only Media Files:</label>
+                                            <div class="col-md-1">
+                                                <input type="checkbox" name="media_files" class="js-switch" />
+                                                <br>
+                                                <br>
+                                            </div>
+                                            <span class="help-block m-b-none"> - Upload Only media file <b>[Works
+                                                    better for Movies & Tv (*.Mkv /
+                                                    *.Avi / *.Flv
+                                                    /*.Mp4)]</b> </span>
+                                        </div>
+                                        {{!-- Crawlers --}}
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Default Movies Auto-Data:</label>
+                                            <div class="col-lg-10">
+                                                <button data-source="imdb" class="dfmv btn btn-white"><img
+                                                        style="max-height: 16px;" src="/assets/img/dgrab/imdb.png">
+                                                    IMDB
+                                                </button>
+                                                <button data-source="tmdb" class="dfmv btn btn-white"><img
+                                                        style="max-height: 16px;" src="/assets/img/dgrab/tmdb.png">
+                                                    TMDB
+                                                </button>
+                                                <button disabled data-source="traktv" class="dfmv btn btn-white"><img
+                                                        style="max-height: 16px;" src="/assets/img/dgrab/traktv.png">
+                                                    Traktv
+                                                </button>
+                                                <input type="hidden" name="default_movie_cr">
+                                            </div>
+                                        </div>
+                                        <br>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Default TV Auto-Data:</label>
+                                            <div class="col-lg-10">
+                                                <button data-source="imdb" class="dftv btn btn-white"><img
+                                                        style="max-height: 16px;" src="/assets/img/dgrab/imdb.png">
+                                                    IMDB
+                                                </button>
+                                                <button data-source="tmdb" class="dftv btn btn-white"><img
+                                                        style="max-height: 16px;" src="/assets/img/dgrab/tmdb.png">
+                                                    TMDB
+                                                </button>
+                                                <button data-source="tvdb" class="dftv btn btn-white"><img
+                                                        style="max-height: 16px;" src="/assets/img/dgrab/tvdb.png">
+                                                    TVDB
+                                                </button>
+                                                <button disabled data-source="traktv" class="dftv btn btn-white"><img
+                                                        style="max-height: 16px;" src="/assets/img/dgrab/traktv.png">
+                                                    Traktv
+                                                </button>
+                                                <button data-source="tvmaze" class="dftv btn btn-white"><img
+                                                        style="max-height: 16px;" src="/assets/img/dgrab/tvmaze.png">
+                                                    TVmaze
+                                                </button>
+                                                <br>
+                                                <br>
+                                                <span class="help-block m-b-none"> - If Default Auto-data service is
+                                                    down, the data must be parsed via manual parser</span>
+                                                <input type="hidden" name="default_tv_cr">
+                                            </div>
+                                        </div>
+                                        {{!-- Thumbnail generator --}}
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Thumbnail Generator:</label>
+                                            <div class="col-md-2">
+                                                <input type="checkbox" name="thumbnail_enabled" class="js-switch" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Upload Thumbnail:</label>
+                                            <div class="col-md-2">
+                                                <input name="upload_thumb_image" type="checkbox" class="js-switch" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Thumbnail cols:</label>
+                                            <div class="col-md-2">
+                                                <input class="nmspin" name="mtncols" type="text" value="4">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Thumbnail Rows:</label>
+                                            <div class="col-sm-2">
+                                                <input class="nmspin" name="mtnrows" type="text" value="5">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Thumbnail Top Text:</label>
+                                            <div class="col-sm-5">
+                                                <input name="mtntext" type="text" class="form-control"
+                                                    placeholder="[www.Google.com]">
+                                                <span class="help-block m-b-none"> - Text to add above image</span>
+                                            </div>
+                                        </div>
+                                        {{!-- Upload Process --}}
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Re-upload after failure:</label>
+                                            <div class="col-md-3">
+                                                <input class="nmspin3" name="upload_tries" type="text" value="0">
+                                                <br>
+                                                <i><span class="Mutedinfo">*`0` means Cancel on first error
+                                                        occured.</span></i>
+                                            </div>
+                                        </div>
+                                        <div class="hr-line-dashed"></div>
+                                        <div class="form-group">
+                                            <div class="col-sm-4 col-sm-offset-2">
+                                                <button class="btn btn-success" type="submit">Save changes</button>
+                                            </div>
+                                        </div>
+                                </form>
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    [
+        "/assets/js/plugins/touchspin/jquery.bootstrap-touchspin.min.js",
+        "/assets/js/plugins/dualListbox/jquery.bootstrap-duallistbox.js",
+        "/assets/js/plugins/switchery/switchery.js"
+    ].forEach(function (src) {
+        var script = document.createElement('script');
+        script.src = src;
+        script.async = false;
+        document.head.appendChild(script);
+    });
+</script>

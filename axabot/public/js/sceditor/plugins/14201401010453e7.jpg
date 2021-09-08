@@ -1,0 +1,265 @@
+/***********************************************************************
+
+  A JavaScript tokenizer / parser / beautifier / compressor.
+  https://github.com/mishoo/UglifyJS2
+
+  -------------------------------- (C) ---------------------------------
+
+                           Author: Mihai Bazon
+                         <mihai.bazon@gmail.com>
+                       http://mihai.bazon.net/blog
+
+  Distributed under the BSD license:
+
+    Copyright 2012 (c) Mihai Bazon <mihai.bazon@gmail.com>
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+
+        * Redistributions of source code must retain the above
+          copyright notice, this list of conditions and the following
+          disclaimer.
+
+        * Redistributions in binary form must reproduce the above
+          copyright notice, this list of conditions and the following
+          disclaimer in the documentation and/or other materials
+          provided with the distribution.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER “AS IS” AND ANY
+    EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+    PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE
+    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+    OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+    TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+    THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+    SUCH DAMAGE.
+
+ ***********************************************************************/
+
+"use strict";
+
+function DEFNODE(type, props, methods, base) {
+    if (arguments.length < 4) base = AST_Node;
+    if (!props) props = [];
+    else props = props.split(/\s+/);
+    var self_props = props;
+    if (base && base.PROPS)
+        props = props.concat(base.PROPS);
+    var code = "return function AST_" + type + "(props){ if (props) { ";
+    for (var i = props.length; --i >= 0;) {
+        code += "this." + props[i] + " = props." + props[i] + ";";
+    }
+    var proto = base && new base;
+    if (proto && proto.initialize || (methods && methods.initialize))
+        code += "this.initialize();";
+    code += "}}";
+    var ctor = new Function(code)();
+    if (proto) {
+        ctor.prototype = proto;
+        ctor.BASE = base;
+    }
+    if (base) base.SUBCLASSES.push(ctor);
+    ctor.prototype.CTOR = ctor;
+    ctor.PROPS = props || null;
+    ctor.SELF_PROPS = self_props;
+    ctor.SUBCLASSES = [];
+    if (type) {
+        ctor.prototype.TYPE = ctor.TYPE = type;
+    }
+    if (methods) for (i in methods) if (HOP(methods, i)) {
+        if (/^\$/.test(i)) {
+            ctor[i.substr(1)] = methods[i];
+        } else {
+            ctor.prototype[i] = methods[i];
+        }
+    }
+    ctor.DEFMETHOD = function(name, method) {
+        this.prototype[name] = method;
+    };
+    if (typeof exports !== "undefined") {
+        exports["AST_" + type] = ctor;
+    }
+    return ctor;
+};
+
+var AST_Token = DEFNODE("Token", "type value line col pos endline endcol endpos nlb comments_before file raw", {
+}, null);
+
+var AST_Node = DEFNODE("Node", "start end", {
+    _clone: function(deep) {
+        if (deep) {
+            var self = this.clone();
+            return self.transform(new TreeTransformer(function(node) {
+                if (node !== self) {
+                    return node.clone(true);
+                }
+            }));
+        }
+        return new this.CTOR(this);
+    },
+    clone: function(deep) {
+        return this._clone(deep);
+    },
+    $documentation: "Base class of all AST nodes",
+    $propdoc: {
+        start: "[AST_Token] The first token of this node",
+        end: "[AST_Token] The last token of this node"
+    },
+    _walk: function(visitor) {
+        return visitor._visit(this);
+    },
+    walk: function(visitor) {
+        return this._walk(visitor); // not sure the indirection will be any help
+    }
+}, null);
+
+AST_Node.warn_function = null;
+AST_Node.warn = function(txt, props) {
+    if (AST_Node.warn_function)
+        AST_Node.warn_function(string_template(txt, props));
+};
+
+/* -----[ statements ]----- */
+
+var AST_Statement = DEFNODE("Statement", null, {
+    $documentation: "Base class of all statements",
+});
+
+var AST_Debugger = DEFNODE("Debugger", null, {
+    $documentation: "Represents a debugger statement",
+}, AST_Statement);
+
+var AST_Directive = DEFNODE("Directive", "value scope quote", {
+    $documentation: "Represents a directive, like \"use strict\";",
+    $propdoc: {
+        value: "[string] The value of this directive as a plain string (it's not an AST_String!)",
+        scope: "[AST_Scope/S] The scope that this directive affects",
+        quote: "[string] the original quote character"
+    },
+}, AST_Statement);
+
+var AST_SimpleStatement = DEFNODE("SimpleStatement", "body", {
+    $documentation: "A statement consisting of an expression, i.e. a = 1 + 2",
+    $propdoc: {
+        body: "[AST_Node] an expression node (should not be instanceof AST_Statement)"
+    },
+    _walk: function(visitor) {
+        return visitor._visit(this, function(){
+            this.body._walk(visitor);
+        });
+    }
+}, AST_Statement);
+
+function walk_body(node, visitor) {
+    var body = node.body;
+    if (body instanceof AST_Statement) {
+        body._walk(visitor);
+    }
+    else for (var i = 0, len = body.length; i < len; i++) {
+        body[i]._walk(visitor);
+    }
+};
+
+var AST_Block = DEFNODE("Block", "body", {
+    $documentation: "A body of statements (usually bracketed)",
+    $propdoc: {
+        body: "[AST_Statement*] an array of statements"
+    },
+    _walk: function(visitor) {
+        return visitor._visit(this, function(){
+            walk_body(this, visitor);
+        });
+    }
+}, AST_Statement);
+
+var AST_BlockStatement = DEFNODE("BlockStatement", null, {
+    $documentation: "A block statement",
+}, AST_Block);
+
+var AST_EmptyStatement = DEFNODE("EmptyStatement", null, {
+    $documentation: "The empty statement (empty block or simply a semicolon)",
+    _walk: function(visitor) {
+        return visitor._visit(this);
+    }
+}, AST_Statement);
+
+var AST_StatementWithBody = DEFNODE("StatementWithBody", "body", {
+    $documentation: "Base class for all statements that contain one nested body: `For`, `ForIn`, `Do`, `While`, `With`",
+    $propdoc: {
+        body: "[AST_Statement] the body; this should always be present, even if it's an AST_EmptyStatement"
+    },
+    _walk: function(visitor) {
+        return visitor._visit(this, function(){
+            this.body._walk(visitor);
+        });
+    }
+}, AST_Statement);
+
+var AST_LabeledStatement = DEFNODE("LabeledStatement", "label", {
+    $documentation: "Statement with a label",
+    $propdoc: {
+        label: "[AST_Label] a label definition"
+    },
+    _walk: function(visitor) {
+        return visitor._visit(this, function(){
+            this.label._walk(visitor);
+            this.body._walk(visitor);
+        });
+    },
+    clone: function(deep) {
+        var node = this._clone(deep);
+        if (deep) {
+            var label = node.label;
+            var def = this.label;
+            node.walk(new TreeWalker(function(node) {
+                if (node instanceof AST_LoopControl
+                    && node.label && node.label.thedef === def) {
+                    node.label.thedef = label;
+                    label.references.push(node);
+                }
+            }));
+        }
+        return node;
+    }
+}, AST_StatementWithBody);
+
+var AST_IterationStatement = DEFNODE("IterationStatement", null, {
+    $documentation: "Internal class.  All loops inherit from it."
+}, AST_StatementWithBody);
+
+var AST_DWLoop = DEFNODE("DWLoop", "condition", {
+    $documentation: "Base class for do/while statements",
+    $propdoc: {
+        condition: "[AST_Node] the loop condition.  Should not be instanceof AST_Statement"
+    }
+}, AST_IterationStatement);
+
+var AST_Do = DEFNODE("Do", null, {
+    $documentation: "A `do` statement",
+    _walk: function(visitor) {
+        return visitor._visit(this, function(){
+            this.body._walk(visitor);
+            this.condition._walk(visitor);
+        });
+    }
+}, AST_DWLoop);
+
+var AST_While = DEFNODE("While", null, {
+    $documentation: "A `while` statement",
+    _walk: function(visitor) {
+        return visitor._visit(this, function(){
+            this.condition._walk(visitor);
+            this.body._walk(visitor);
+        });
+    }
+}, AST_DWLoop);
+
+var AST_For = DEFNODE("For", "init condition step", {
+    $documentation: "A `for` statement",
+    $propdoc: {
+        init: "[AST_Node?] the `for` initialization code, or null i

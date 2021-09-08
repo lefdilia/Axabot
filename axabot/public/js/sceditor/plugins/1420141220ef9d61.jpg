@@ -1,0 +1,241 @@
+<?php
+
+class FLM {
+
+	public $hash = 'flm.dat';
+
+	protected $xmlrpc;
+
+	public $postlist = array('dir', 'action', 'file', 'fls', 'target', 'mode', 'to', 'format');
+
+	public $workdir;
+	public	$userdir;
+	public $fman_path;
+
+	protected $output = array('errcode' => 0);
+	protected $temp = array();
+	protected $filelist;
+
+	protected $uisettings;
+	
+	protected $settings = array();
+
+	public $shout = TRUE;
+
+
+	public function __construct() {
+		/*
+		 * Construct function - initialises the objects properties 
+		 * 
+		 * $userdir - current user home directory (jail)
+		 * $workdir - the directory where filemanager is working at the time of call
+		 * $filelist - the current file-list sent for processing (archive,move,copy,delete, etc)
+		 * $settings - array with filemager current configuration
+		 * $fman_path - string flm.class.php directory location
+		 * $xmlrpc - xml-rpc fixxed request class initialization for internal object calls
+		 * 
+		 */
+		global $topDirectory, $fm;
+
+		$this->check_post($this->postlist);
+		$this->userdir = addslash($topDirectory);
+
+		$this->workdir = $this->userdir.(($this->postlist['dir'] !== false) ? $this->postlist['dir']: '');
+		$this->xmlrpc = new rxmlrpcfix();
+
+		if(($this->postlist['dir'] === FALSE) || !$this->remote_test($this->workdir, 'd')) { $this->output['errcode'] = 2; die();}
+		elseif ($this->postlist['action'] === FALSE) { $this->sdie('No action defined');}
+
+		$this->workdir = addslash($this->workdir);
+		$this->fman_path = dirname(__FILE__);
+
+	//	$uisettings = new stdClass():
+	//	$uisettings->hash = 'sex';
+
+		$this->settings = $fm;
+		$this->filelist = ($this->postlist['fls'] !== FALSE) ? $this->get_filelist($this->postlist['fls']) : '';
+
+		if(!is_dir($this->settings['tempdir'])) {	$this->output['errcode'] = 17; die(); }
+		$this->make_temp();
+
+	}
+
+	public function archive () {
+
+		if (empty($this->filelist)) {$this->output['errcode'] = 22; return false;}
+
+		$a['file'] = $this->userdir.$this->postlist['target'];
+
+		if (($this->postlist['target'] === FALSE) || LFS::test($a['file'],'e')) {$this->output['errcode'] = 16; return false;}
+		if(($this->postlist['mode'] === FALSE) || (($options = json_decode($this->postlist['mode'], true)) === FALSE)){$this->sdie('Invalid archive type');}
+
+ 		if(!isset($this->settings['archive']['types'][$options['type']])) { $this->sdie('Invalid archive type');}
+
+		$a['type'] = $this->settings['archive']['types'][$options['type']];
+		$a['comp'] = $this->settings['archive']['compress'][$options['type']][$options['compression']];
+		$a['volume'] = (intval($options['vsize'])*1024);
+		$a['multif'] = (($a['type'] == 'rar') && ($options['format'] == 'old')) ? '-vn' : '';
+
+		
+		switch($a['type']) {
+				
+				case 'gzip': 
+				case 'bzip2': 
+					$bin = 'tar';
+					break;
+				default: 
+					$bin = $a['type'];
+		}
+
+		if(($options['password'] != '') && ($a['type'] == 'rar')) { 
+			$this->filelist = escapeshellarg('-p'.$options['password']).' '.$this->filelist; 
+		}
+
+
+		$this->batch_exec(array("sh", "-c", escapeshellarg($this->fman_path.'/scripts/archive')." ".escapeshellarg(getExternal($bin))." ".
+							escapeshellarg($this->temp['dir'])." ".escapeshellarg($a['file'])." ".
+							escapeshellarg($a['type'])." ".escapeshellarg($a['comp'])." ".
+							escapeshellarg($a['volume'])." ".escapeshellarg($a['multif'])));
+	}
+
+
+	public function batch_exec($what) {
+
+		$lk = array_pop(array_keys($what));
+
+		$what[$lk] .= ' '.$this->filelist.' &';
+		
+		if(!is_dir ($this->temp['dir'])) {
+				umask(000);
+				mkdir($this->temp['dir'], 0777, true);
+		}
+
+		$this->xmlrpc->addCommand(new rXMLRPCCommand("execute", $what));
+		if($this->xmlrpc->success()) {$this->output['tmpdir'] = $this->temp['tok'];} else {$this->output['errcode'] = 23;}
+	}
+	
+	public function remote_test($dirname, $o) {
+		/*
+		 * Test's to check if $arg1 exists from rtorrent userid
+		 * 
+		 *	@param string target - full path
+		 * 	@param string option to use with test
+		 * 
+		 * 	Example: $this->remote_test('/tmp', 'd');
+		 * 	For test command options see: http://linux.about.com/library/cmd/blcmdl1_test.htm
+		 */
+		$this->xmlrpc->addCommand( new rXMLRPCCommand('execute', array('test','-'.$o, $dirname)));
+		return (bool)$this->xmlrpc->success();
+	}
+
+
+	public function check_post(&$what) {
+
+		if((count($_POST) < 1) && ((PHP_SAPI == 'cli') || (PHP_SAPI == 'cgi'))) {
+				foreach(file("php://input") as $key => $inv) {$_POST[$key] = rawurldecode($inv);}
+		} 
+
+		$dupe = $what;
+		foreach($dupe as $k => $val) {
+			unset($what[$k]);
+			$what[$val] = (isset($_POST[$val]) && (trim($_POST[$val]) != '')) ? trim($_POST[$val], '/') : FALSE;
+		}
+	}
+
+
+	public function copy($to) {
+		if(($this->postlist['to'] === FALSE) || !is_dir($to)) {$this->output['errcode'] = 2; return false; }
+		if (empty($this->filelist)) {$this->output['errcode'] = 22; return false;}
+
+		$this->batch_exec(array("sh", "-c", escapeshellarg($this->fman_path.'/scripts/cp')." ".escapeshellarg($this->temp['dir'])." ".
+							 escapeshellarg($to)));
+	}
+
+
+	static public function compare($a, $b) {return strcmp($a['name'], $b['name']);}
+
+	public function dirlist() {
+
+		$this->xmlrpc->addCommand( new rXMLRPCCommand('execute_capture', 
+					array('find', $this->workdir, '-mindepth', '1', '-maxdepth', '1', '-printf', '%y\t%f\t%s\t%C@\t%#m\n')));
+
+		if(!$this->xmlrpc->success()) {$this->output['errcode'] = 10; return false;}
+		$this->output['listing'] = array();
+
+		$i = 0;
+		foreach (explode("\n", trim($this->xmlrpc->val[0])) as $fileline) {
+
+			if(empty($fileline)) {continue;}
+			$f = array();
+
+			list($fd, $f['name'], $f['size'], $f['time'], $f['perm']) = explode("\t", trim($fileline));
+
+			$f['name'] = stripslashes($f['name']);
+			$f['time'] = intval($f['time']);
+
+			if($fd == 'd') {	$f['name'] .= '/';
+						$f['size'] = ''; }
+
+			$this->output['listing'][$i] = $f;
+			$i++;
+
+		}
+
+		usort($this->output['listing'], array('FLM', 'compare'));
+	}
+
+
+	public function dos_format ($ibm_437, $swedishmagic = false) {
+		$table437 = array(	"\200", "\201", "\202", "\203", "\204", "\205", "\206", "\207",
+					"\210", "\211", "\212", "\213", "\214", "\215", "\216", "\217", "\220",
+					"\221", "\222", "\223", "\224", "\225", "\226", "\227", "\230", "\231",
+					"\232", "\233", "\234", "\235", "\236", "\237", "\240", "\241", "\242",
+					"\243", "\244", "\245", "\246", "\247", "\250", "\251", "\252", "\253",
+					"\254", "\255", "\256", "\257", "\260", "\261", "\262", "\263", "\264",
+					"\265", "\266", "\267", "\270", "\271", "\272", "\273", "\274", "\275",
+					"\276", "\277", "\300", "\301", "\302", "\303", "\304", "\305", "\306",
+					"\307", "\310", "\311", "\312", "\313", "\314", "\315", "\316", "\317",
+					"\320", "\321", "\322", "\323", "\324", "\325", "\326", "\327", "\330",
+					"\331", "\332", "\333", "\334", "\335", "\336", "\337", "\340", "\341",
+					"\342", "\343", "\344", "\345", "\346", "\347", "\350", "\351", "\352",
+					"\353", "\354", "\355", "\356", "\357", "\360", "\361", "\362", "\363",
+					"\364", "\365", "\366", "\367", "\370", "\371", "\372", "\373", "\374",
+					"\375", "\376", "\377");
+
+		$tablehtml = array("&#x00c7;", "&#x00fc;", "&#x00e9;", "&#x00e2;", "&#x00e4;",
+					"&#x00e0;", "&#x00e5;", "&#x00e7;", "&#x00ea;", "&#x00eb;", "&#x00e8;",
+					"&#x00ef;", "&#x00ee;", "&#x00ec;", "&#x00c4;", "&#x00c5;", "&#x00c9;",
+					"&#x00e6;", "&#x00c6;", "&#x00f4;", "&#x00f6;", "&#x00f2;", "&#x00fb;",
+					"&#x00f9;", "&#x00ff;", "&#x00d6;", "&#x00dc;", "&#x00a2;", "&#x00a3;",
+					"&#x00a5;", "&#x20a7;", "&#x0192;", "&#x00e1;", "&#x00ed;", "&#x00f3;",
+					"&#x00fa;", "&#x00f1;", "&#x00d1;", "&#x00aa;", "&#x00ba;", "&#x00bf;",
+					"&#x2310;", "&#x00ac;", "&#x00bd;", "&#x00bc;", "&#x00a1;", "&#x00ab;",
+					"&#x00bb;", "&#x2591;", "&#x2592;", "&#x2593;", "&#x2502;", "&#x2524;",
+					"&#x2561;", "&#x2562;", "&#x2556;", "&#x2555;", "&#x2563;", "&#x2551;",
+					"&#x2557;", "&#x255d;", "&#x255c;", "&#x255b;", "&#x2510;", "&#x2514;",
+					"&#x2534;", "&#x252c;", "&#x251c;", "&#x2500;", "&#x253c;", "&#x255e;",
+					"&#x255f;", "&#x255a;", "&#x2554;", "&#x2569;", "&#x2566;", "&#x2560;",
+					"&#x2550;", "&#x256c;", "&#x2567;", "&#x2568;", "&#x2564;", "&#x2565;",
+					"&#x2559;", "&#x2558;", "&#x2552;", "&#x2553;", "&#x256b;", "&#x256a;",
+					"&#x2518;", "&#x250c;", "&#x2588;", "&#x2584;", "&#x258c;", "&#x2590;",
+					"&#x2580;", "&#x03b1;", "&#x00df;", "&#x0393;", "&#x03c0;", "&#x03a3;",
+					"&#x03c3;", "&#x03bc;", "&#x03c4;", "&#x03a6;", "&#x0398;", "&#x03a9;",
+					"&#x03b4;", "&#x221e;", "&#x03c6;", "&#x03b5;", "&#x2229;", "&#x2261;",
+					"&#x00b1;", "&#x2265;", "&#x2264;", "&#x2320;", "&#x2321;", "&#x00f7;",
+					"&#x2248;", "&#x00b0;", "&#x2219;", "&#x00b7;", "&#x221a;", "&#x207f;",
+					"&#x00b2;", "&#x25a0;", "&#x00a0;");
+
+		$s = htmlspecialchars($ibm_437);
+
+		$control = array(	"\000", "\001", "\002", "\003", "\004", "\005", "\006", "\007",
+					"\010", "\011", /*"\012",*/ "\013", "\014", /*"\015",*/ "\016", "\017",
+					"\020", "\021", "\022", "\023", "\024", "\025", "\026", "\027",
+					"\030", "\031", "\032", "\033", "\034", "\035", "\036", "\037",
+					"\177");
+
+		$s = str_replace($control," ",$s);
+
+		if ($swedishmagic){
+			$s = str_replace("\345","\206",$s); // Code windows "?" to dos.
+			$s = str_replace("\344","\204",$s); // Code windows "�" to dos.
+			

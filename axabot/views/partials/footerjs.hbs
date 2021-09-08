@@ -1,0 +1,19 @@
+<script>
+    [
+        //"/socket.io/socket.io.js",
+        "/assets/js/bootstrap.min.js",
+        "/assets/js/plugins/toastr/toastr.min.js",
+        "/assets/js/plugins/touchspin/jquery.bootstrap-touchspin.min.js",
+        "/assets/js/plugins/dualListbox/jquery.bootstrap-duallistbox.js",
+        "/assets/js/jquery.inline-confirmation.min.js",
+        "/assets/js/bootstrap-confirm-button.min.js",
+        "/assets/js/jquery.ui.position.js",
+        "/assets/js/plugins/sweetalert/sweetalert.min.js",
+        "/assets/js/base.js"
+    ].forEach(function (src) {
+        var script = document.createElement('script');
+        script.src = src;
+        script.async = false;
+        document.head.appendChild(script);
+    });
+</script>

@@ -1,0 +1,301 @@
+/*!
+ * Flatdoc - (c) 2013, 2014 Rico Sta. Cruz
+ * http://ricostacruz.com/flatdoc
+ * @license MIT
+ */
+
+(function($) {
+  var exports = this;
+
+  var marked;
+
+  /**
+   * Basic Flatdoc module.
+   *
+   * The main entry point is `Flatdoc.run()`, which invokes the [Runner].
+   *
+   *     Flatdoc.run({
+   *       fetcher: Flatdoc.github('rstacruz/backbone-patterns');
+   *     });
+   *
+   * These fetcher functions are available:
+   *
+   *     Flatdoc.github('owner/repo')
+   *     Flatdoc.github('owner/repo', 'API.md')
+   *     Flatdoc.github('owner/repo', 'API.md', 'branch')
+   *     Flatdoc.bitbucket('owner/repo')
+   *     Flatdoc.bitbucket('owner/repo', 'API.md')
+   *     Flatdoc.bitbucket('owner/repo', 'API.md', 'branch')
+   *     Flatdoc.file('http://path/to/url')
+   *     Flatdoc.file([ 'http://path/to/url', ... ])
+   */
+
+  var Flatdoc = exports.Flatdoc = {};
+
+  /**
+   * Creates a runner.
+   * See [Flatdoc].
+   */
+
+  Flatdoc.run = function(options) {
+    $(function() { (new Flatdoc.runner(options)).run(); });
+  };
+
+  /**
+   * File fetcher function.
+   *
+   * Fetches a given `url` via AJAX.
+   * See [Runner#run()] for a description of fetcher functions.
+   */
+
+  Flatdoc.file = function(url) {
+    function loadData(locations, response, callback) {
+      if (locations.length === 0) callback(null, response);
+
+      else $.get(locations.shift())
+        .fail(function(e) {
+          callback(e, null);
+        })
+        .done(function (data) {
+          if (response.length > 0) response += '\n\n';
+          response += data;
+          loadData(locations, response, callback);
+        });
+    }
+
+    return function(callback) {
+      loadData(url instanceof Array ?
+        url : [url], '', callback);
+    };
+  };
+
+  /**
+   * Github fetcher.
+   * Fetches from repo `repo` (in format 'user/repo').
+   *
+   * If the parameter `filepath` is supplied, it fetches the contents of that
+   * given file in the repo's default branch. To fetch the contents of
+   * `filepath` from a different branch, the parameter `ref` should be
+   * supplied with the target branch name.
+   *
+   * See [Runner#run()] for a description of fetcher functions.
+   *
+   * See: http://developer.github.com/v3/repos/contents/
+   */
+  Flatdoc.github = function(repo, filepath, ref) {
+    var url;
+    if (filepath) {
+      url = 'https://api.github.com/repos/'+repo+'/contents/'+filepath;
+    } else {
+      url = 'https://api.github.com/repos/'+repo+'/readme';
+    }
+    if (ref) {
+      url += '?ref='+ref;
+    }
+    return function(callback) {
+      $.get(url)
+        .fail(function(e) { callback(e, null); })
+        .done(function(data) {
+          var markdown = exports.Base64.decode(data.content);
+          callback(null, markdown);
+        });
+    };
+  };
+
+  /**
+   * Bitbucket fetcher.
+   * Fetches from repo `repo` (in format 'user/repo').
+   *
+   * If the parameter `filepath` is supplied, it fetches the contents of that
+   * given file in the repo.
+   *
+   * See [Runner#run()] for a description of fetcher functions.
+   *
+   * See: https://confluence.atlassian.com/display/BITBUCKET/src+Resources#srcResources-GETrawcontentofanindividualfile
+   * See: http://ben.onfabrik.com/posts/embed-bitbucket-source-code-on-your-website
+   * Bitbucket appears to have stricter restrictions on
+   * Access-Control-Allow-Origin, and so the method here is a bit
+   * more complicated than for Github
+   *
+   * If you don't pass a branch name, then 'default' for Hg repos is assumed
+   * For git, you should pass 'master'. In both cases, you should also be able
+   * to pass in a revision number here -- in Mercurial, this also includes
+   * things like 'tip' or the repo-local integer revision number
+   * Default to Mercurial because Git users historically tend to use GitHub
+   */
+  Flatdoc.bitbucket = function(repo, filepath, branch) {
+    if (!filepath) filepath = 'readme.md';
+    if (!branch) branch = 'default';
+
+    var url = 'https://bitbucket.org/api/1.0/repositories/'+repo+'/src/'+branch+'/'+filepath;
+
+   return function(callback) {
+     $.ajax({
+      url: url,
+      dataType: 'jsonp',
+      error: function(xhr, status, error) {
+        alert(error);
+      },
+      success: function(response) {
+        var markdown = response.data;
+        callback(null, markdown);
+      }
+  });
+};
+};
+
+  /**
+   * Parser module.
+   * Parses a given Markdown document and returns a JSON object with data
+   * on the Markdown document.
+   *
+   *     var data = Flatdoc.parser.parse('markdown source here');
+   *     console.log(data);
+   *
+   *     data == {
+   *       title: 'My Project',
+   *       content: '<p>This project is a...',
+   *       menu: {...}
+   *     }
+   */
+
+  var Parser = Flatdoc.parser = {};
+
+  /**
+   * Parses a given Markdown document.
+   * See `Parser` for more info.
+   */
+  Parser.parse = function(source, highlight) {
+    marked = exports.marked;
+
+    Parser.setMarkedOptions(highlight);
+
+    var html = $("<div>" + marked(source));
+    var h1 = html.find('h1').eq(0);
+    var title = h1.text();
+
+    // Mangle content
+    Transformer.mangle(html);
+    var menu = Transformer.getMenu(html);
+
+    return { title: title, content: html, menu: menu };
+  };
+
+  Parser.setMarkedOptions = function(highlight) {
+    marked.setOptions({
+      highlight: function(code, lang) {
+        if (lang) {
+          return highlight(code, lang);
+        }
+        return code;
+      }
+    });
+  };
+
+  /**
+   * Transformer module.
+   * This takes care of any HTML mangling needed.  The main entry point is
+   * `.mangle()` which applies all transformations needed.
+   *
+   *     var $content = $("<p>Hello there, this is a docu...");
+   *     Flatdoc.transformer.mangle($content);
+   *
+   * If you would like to change any of the transformations, decorate any of
+   * the functions in `Flatdoc.transformer`.
+   */
+
+  var Transformer = Flatdoc.transformer = {};
+
+  /**
+   * Takes a given HTML `$content` and improves the markup of it by executing
+   * the transformations.
+   *
+   * > See: [Transformer](#transformer)
+   */
+  Transformer.mangle = function($content) {
+    this.addIDs($content);
+    this.buttonize($content);
+    this.smartquotes($content);
+  };
+
+  /**
+   * Adds IDs to headings.
+   */
+
+  Transformer.addIDs = function($content) {
+    var slugs = ['', '', ''];
+    $content.find('h1, h2, h3').each(function() {
+      var $el = $(this);
+      var num = parseInt(this.nodeName[1]);
+      var text = $el.text();
+      var slug = Flatdoc.slugify(text);
+      if (num > 1) slug = slugs[num - 2] + '-' + slug;
+      slugs.length = num - 1;
+      slugs = slugs.concat([slug, slug]);
+      $el.attr('id', slug);
+    });
+  };
+
+  /**
+   * Returns menu data for a given HTML.
+   *
+   *     menu = Flatdoc.transformer.getMenu($content);
+   *     menu == {
+   *       level: 0,
+   *       items: [{
+   *         section: "Getting started",
+   *         level: 1,
+   *         items: [...]}, ...]}
+   */
+
+  Transformer.getMenu = function($content) {
+    var root = {items: [], id: '', level: 0};
+    var cache = [root];
+
+    function mkdir_p(level) {
+      cache.length = level + 1;
+      var obj = cache[level];
+      if (!obj) {
+        var parent = (level > 1) ? mkdir_p(level-1) : root;
+        obj = { items: [], level: level };
+        cache = cache.concat([obj, obj]);
+        parent.items.push(obj);
+      }
+      return obj;
+    }
+
+    $content.find('h1, h2, h3').each(function() {
+      var $el = $(this);
+      var level = +(this.nodeName.substr(1));
+
+      var parent = mkdir_p(level-1);
+
+      var obj = { section: $el.text(), items: [], level: level, id: $el.attr('id') };
+      parent.items.push(obj);
+      cache[level] = obj;
+    });
+
+    return root;
+  };
+
+  /**
+   * Changes "button >" text to buttons.
+   */
+
+  Transformer.buttonize = function($content) {
+    $content.find('a').each(function() {
+      var $a = $(this);
+
+      var m = $a.text().match(/^(.*) >$/);
+      if (m) $a.text(m[1]).addClass('button');
+    });
+  };
+
+  /**
+   * Applies smart quotes to a given element.
+   * It leaves `code` and `pre` blocks alone.
+   */
+
+  Transformer.smartquotes = function ($content) {
+    var nodes = getTextNodesIn($content), len = nodes.length;
+    for (var i

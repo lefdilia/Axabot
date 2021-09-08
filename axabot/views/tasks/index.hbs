@@ -1,0 +1,177 @@
+<div class="row">
+    <div class="col-lg-12">
+        <div class="ibox float-e-margins border-bottom">
+            <div class="ibox-title">
+                <h5><i class="fa fa-tasks"></i> Tasks List ({{{ this.pagin.count }}})</h5>
+            </div>
+            <div class="ibox-content" style="display:block;">
+                <div class="row">
+                    <div class="col-sm-9 m-b-xs">
+                        <div data-toggle="" class="btn-group">
+                            <a href="/tasks/" class="btn btn-sm btn-white">
+                                All Tasks ( <b class="ts_task"
+                                    data-status="all">{{#if this.mstasks.all}}{{this.mstasks.all}}{{else}}0{{/if}}</b>
+                                )</a>
+                            <a href="/tasks/?st=2" class="btn btn-sm btn-white">
+                                In Queue ( <b class="ts_task"
+                                    data-status="inqueue">{{#if this.mstasks.inqueue}}{{this.mstasks.inqueue}}{{else}}0{{/if}}</b>
+                                )</a>
+                            <a href="/tasks/?st=3" class="btn btn-sm btn-white">
+                                Finished ( <b class="ts_task"
+                                    data-status="finished">{{#if this.mstasks.finished}}{{this.mstasks.finished}}{{else}}0{{/if}}</b>
+                                )</a>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="table-responsive">
+                    <div class="project-list">
+                        <table id="taski" class="table table-hover">
+                            <tbody>
+                                {{#if this.data.length}}
+                                    {{#each data}}
+                                        <tr data-task="{{this._id}}">
+                                            <td style="width:70px;" class="project-status blabel"
+                                                data-status="{{{this.task_stats.status}}}">
+                                                <center>{{{taskStatus}}}</center>
+                                            </td>
+                                            <td style="width:50%;" class="project-title">
+                                                <a>{{{truncate this.task_name 60}}} </a>
+                                                <br />
+                                                <small><b>Created </b> {{daterpl this.created true }}</small>
+                                                {{#if this.task_infos.size}}
+                                                    <small> - <b>Size :</b> {{dmsize}}</small>
+                                                    <small> - <b>Profile :</b> {{this.profile.name}}</small>
+                                                {{/if}}
+                                            </td>
+                                            <td style="width:25%;" class="project-completion">
+                                                <small>
+                                                    <span class="mbprogress">{{{speedApTask}}}</span>
+                                                    <span class="pull-right">{{this.count}} Sub-Tasks </span>
+                                                </small>
+                                                <div
+                                                    class="mbprogressBar progress progress-mini {{{fixBigCss 'progressClass'}}}">
+                                                    <div class="progress-bar {{{fixBigCss 'progressClassBar'}}} mbDivprogress"
+                                                        style="width: {{{speedApTask}}};"></div>
+                                                </div>
+                                            </td>
+                                            <td class="project-actions">
+                                                <a href="javascript:void(0);" class="vtask btn btn-default btn-xs"><i
+                                                        class="fa fa-expand"></i>
+                                                    Expand </a>
+                                            </td>
+                                        </tr>
+                                        <tr data-idk="{{this._id}}" style="display:none;" class="no-hover _miniTr">
+                                            {{#if this.child_tasks.length}}
+                                                <td colspan="4">
+                                                    <table class="table bgtist table-hover tableTask">
+                                                        <tbody>
+                                                            {{#each this.child_tasks}}
+                                                                <tr style="{{{statusBg}}}" _taskid="{{../this._id}}"
+                                                                    _subid="{{this._id}}"
+                                                                    data-status="{{{ucwrd this.stats.status}}}">
+                                                                    <td style="width:3%;" class="project-status">
+                                                                        <center>{{{childTaskStatus}}}</center>
+                                                                    </td>
+                                                                    <td style="width:50%;" class="project-title">
+                                                                        <span>{{truncate this.infos.filename 70}}</span>
+                                                                        <br>
+                                                                        <b>Type : </b> <span>{{childType}}
+                                                                            <span style="padding-right:2px;"
+                                                                                class="pull-right noselect">
+                                                                                <span
+                                                                                    class="font12 msuploaded">{{dfuploaded}}</span>/<span
+                                                                                    class="font12 msfsize">{{dfsize}}</span>
+                                                                            </span>
+                                                                        </span>
+                                                                    </td>
+                                                                    <td style="width:15%;padding-left:20px;">
+                                                                        <center>
+                                                                            <span class="font12 pull-left">
+                                                                                ⇪ {{ucwrd this.infos.host}}
+                                                                            </span>
+                                                                        </center>
+                                                                    </td>
+                                                                    <td style="width:20%;" class="project-completion">
+                                                                        <span class="font12">
+                                                                            <span class="msprogress">
+                                                                                {{{speedApChildTask}}} </span>
+                                                                            <span class="pull-right msfspeed">
+                                                                                {{{dfspeed}}} </span>
+                                                                        </span>
+                                                                        <div
+                                                                            class="msprogressBar progress progress-mini {{{fixCss 'progressClass'}}}">
+                                                                            <div class="progress-bar {{{fixCss 'progressClassBar'}}} msDivprogress"
+                                                                                style="width: {{{speedApChildTask}}};">
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td style="width:8%;" class="project-actions">
+                                                                        <center>
+                                                                            {{#if this.infos.link }}
+                                                                                <span class="font12 msremain">
+                                                                                    <a class="Eroka"
+                                                                                        style="color:#3e894f;"
+                                                                                        target="_blank"
+                                                                                        href="{{this.infos.link}}">
+                                                                                        <span data-toggle="tooltip"
+                                                                                            data-placement="top"
+                                                                                            title="{{ this.infos.link}}">
+                                                                                            <b><i
+                                                                                                    class="fa fa-check-circle"></i></b>
+                                                                                        </span>
+                                                                                    </a>
+                                                                                </span>
+                                                                            {{else if this.infos.error }}
+                                                                                <span class="font12 msremain">
+                                                                                    <span class="text-danger Eroka">
+                                                                                        <span data-toggle="tooltip"
+                                                                                            data-placement="top"
+                                                                                            title="{{ this.infos.error}}">
+                                                                                            <b><i
+                                                                                                    class="fa fa-exclamation-triangle"></i></b>
+                                                                                        </span>
+                                                                                    </span>
+                                                                                </span>
+                                                                            {{else}}
+                                                                                <span
+                                                                                    class="font12 msremain">00:00:00</span>
+                                                                            {{/if}}
+                                                                        </center>
+                                                                    </td>
+                                                                </tr>
+                                                            {{/each}}
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            {{/if}}
+                                        </tr>
+                                    {{/each}}
+                                {{else}}
+                                    <center>
+                                        <h5><i class="fa fa-exclamation-circle"></i> No Tasks Available</h4>
+                                    </center>
+                                {{/if}}
+                            </tbody>
+                        </table>
+                        {{#ifCond this.pagin.nmpages '>' '1' }}
+                            <div align="center">
+                                {{{ pagination 'tasks' }}}
+                            </div>
+                        {{/ifCond}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    [
+        "/assets/js/jquery.contextMenu.min.js"
+    ].forEach(function (src) {
+        var script = document.createElement('script');
+        script.src = src;
+        script.async = false;
+        document.head.appendChild(script);
+    });
+</script>

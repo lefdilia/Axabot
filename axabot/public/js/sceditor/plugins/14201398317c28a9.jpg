@@ -1,0 +1,274 @@
+define(['exports', 'module', '../base', '../exception', '../utils', './code-gen'], function (exports, module, _base, _exception, _utils, _codeGen) {
+  'use strict';
+
+  // istanbul ignore next
+
+  function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+  var _Exception = _interopRequireDefault(_exception);
+
+  var _CodeGen = _interopRequireDefault(_codeGen);
+
+  function Literal(value) {
+    this.value = value;
+  }
+
+  function JavaScriptCompiler() {}
+
+  JavaScriptCompiler.prototype = {
+    // PUBLIC API: You can override these methods in a subclass to provide
+    // alternative compiled forms for name lookup and buffering semantics
+    nameLookup: function nameLookup(parent, name /* , type*/) {
+      if (JavaScriptCompiler.isValidJavaScriptVariableName(name)) {
+        return [parent, '.', name];
+      } else {
+        return [parent, '[', JSON.stringify(name), ']'];
+      }
+    },
+    depthedLookup: function depthedLookup(name) {
+      return [this.aliasable('container.lookup'), '(depths, "', name, '")'];
+    },
+
+    compilerInfo: function compilerInfo() {
+      var revision = _base.COMPILER_REVISION,
+          versions = _base.REVISION_CHANGES[revision];
+      return [revision, versions];
+    },
+
+    appendToBuffer: function appendToBuffer(source, location, explicit) {
+      // Force a source as this simplifies the merge logic.
+      if (!_utils.isArray(source)) {
+        source = [source];
+      }
+      source = this.source.wrap(source, location);
+
+      if (this.environment.isSimple) {
+        return ['return ', source, ';'];
+      } else if (explicit) {
+        // This is a case where the buffer operation occurs as a child of another
+        // construct, generally braces. We have to explicitly output these buffer
+        // operations to ensure that the emitted code goes in the correct location.
+        return ['buffer += ', source, ';'];
+      } else {
+        source.appendToBuffer = true;
+        return source;
+      }
+    },
+
+    initializeBuffer: function initializeBuffer() {
+      return this.quotedString('');
+    },
+    // END PUBLIC API
+
+    compile: function compile(environment, options, context, asObject) {
+      this.environment = environment;
+      this.options = options;
+      this.stringParams = this.options.stringParams;
+      this.trackIds = this.options.trackIds;
+      this.precompile = !asObject;
+
+      this.name = this.environment.name;
+      this.isChild = !!context;
+      this.context = context || {
+        decorators: [],
+        programs: [],
+        environments: []
+      };
+
+      this.preamble();
+
+      this.stackSlot = 0;
+      this.stackVars = [];
+      this.aliases = {};
+      this.registers = { list: [] };
+      this.hashes = [];
+      this.compileStack = [];
+      this.inlineStack = [];
+      this.blockParams = [];
+
+      this.compileChildren(environment, options);
+
+      this.useDepths = this.useDepths || environment.useDepths || environment.useDecorators || this.options.compat;
+      this.useBlockParams = this.useBlockParams || environment.useBlockParams;
+
+      var opcodes = environment.opcodes,
+          opcode = undefined,
+          firstLoc = undefined,
+          i = undefined,
+          l = undefined;
+
+      for (i = 0, l = opcodes.length; i < l; i++) {
+        opcode = opcodes[i];
+
+        this.source.currentLocation = opcode.loc;
+        firstLoc = firstLoc || opcode.loc;
+        this[opcode.opcode].apply(this, opcode.args);
+      }
+
+      // Flush any trailing content that might be pending.
+      this.source.currentLocation = firstLoc;
+      this.pushSource('');
+
+      /* istanbul ignore next */
+      if (this.stackSlot || this.inlineStack.length || this.compileStack.length) {
+        throw new _Exception['default']('Compile completed with content left on stack');
+      }
+
+      if (!this.decorators.isEmpty()) {
+        this.useDecorators = true;
+
+        this.decorators.prepend('var decorators = container.decorators;\n');
+        this.decorators.push('return fn;');
+
+        if (asObject) {
+          this.decorators = Function.apply(this, ['fn', 'props', 'container', 'depth0', 'data', 'blockParams', 'depths', this.decorators.merge()]);
+        } else {
+          this.decorators.prepend('function(fn, props, container, depth0, data, blockParams, depths) {\n');
+          this.decorators.push('}\n');
+          this.decorators = this.decorators.merge();
+        }
+      } else {
+        this.decorators = undefined;
+      }
+
+      var fn = this.createFunctionContext(asObject);
+      if (!this.isChild) {
+        var ret = {
+          compiler: this.compilerInfo(),
+          main: fn
+        };
+
+        if (this.decorators) {
+          ret.main_d = this.decorators; // eslint-disable-line camelcase
+          ret.useDecorators = true;
+        }
+
+        var _context = this.context;
+        var programs = _context.programs;
+        var decorators = _context.decorators;
+
+        for (i = 0, l = programs.length; i < l; i++) {
+          if (programs[i]) {
+            ret[i] = programs[i];
+            if (decorators[i]) {
+              ret[i + '_d'] = decorators[i];
+              ret.useDecorators = true;
+            }
+          }
+        }
+
+        if (this.environment.usePartial) {
+          ret.usePartial = true;
+        }
+        if (this.options.data) {
+          ret.useData = true;
+        }
+        if (this.useDepths) {
+          ret.useDepths = true;
+        }
+        if (this.useBlockParams) {
+          ret.useBlockParams = true;
+        }
+        if (this.options.compat) {
+          ret.compat = true;
+        }
+
+        if (!asObject) {
+          ret.compiler = JSON.stringify(ret.compiler);
+
+          this.source.currentLocation = { start: { line: 1, column: 0 } };
+          ret = this.objectLiteral(ret);
+
+          if (options.srcName) {
+            ret = ret.toStringWithSourceMap({ file: options.destName });
+            ret.map = ret.map && ret.map.toString();
+          } else {
+            ret = ret.toString();
+          }
+        } else {
+          ret.compilerOptions = this.options;
+        }
+
+        return ret;
+      } else {
+        return fn;
+      }
+    },
+
+    preamble: function preamble() {
+      // track the last context pushed into place to allow skipping the
+      // getContext opcode when it would be a noop
+      this.lastContext = 0;
+      this.source = new _CodeGen['default'](this.options.srcName);
+      this.decorators = new _CodeGen['default'](this.options.srcName);
+    },
+
+    createFunctionContext: function createFunctionContext(asObject) {
+      var varDeclarations = '';
+
+      var locals = this.stackVars.concat(this.registers.list);
+      if (locals.length > 0) {
+        varDeclarations += ', ' + locals.join(', ');
+      }
+
+      // Generate minimizer alias mappings
+      //
+      // When using true SourceNodes, this will update all references to the given alias
+      // as the source nodes are reused in situ. For the non-source node compilation mode,
+      // aliases will not be used, but this case is already being run on the client and
+      // we aren't concern about minimizing the template size.
+      var aliasCount = 0;
+      for (var alias in this.aliases) {
+        // eslint-disable-line guard-for-in
+        var node = this.aliases[alias];
+
+        if (this.aliases.hasOwnProperty(alias) && node.children && node.referenceCount > 1) {
+          varDeclarations += ', alias' + ++aliasCount + '=' + alias;
+          node.children[0] = 'alias' + aliasCount;
+        }
+      }
+
+      var params = ['container', 'depth0', 'helpers', 'partials', 'data'];
+
+      if (this.useBlockParams || this.useDepths) {
+        params.push('blockParams');
+      }
+      if (this.useDepths) {
+        params.push('depths');
+      }
+
+      // Perform a second pass over the output to merge content when possible
+      var source = this.mergeSource(varDeclarations);
+
+      if (asObject) {
+        params.push(source);
+
+        return Function.apply(this, params);
+      } else {
+        return this.source.wrap(['function(', params.join(','), ') {\n  ', source, '}']);
+      }
+    },
+    mergeSource: function mergeSource(varDeclarations) {
+      var isSimple = this.environment.isSimple,
+          appendOnly = !this.forceBuffer,
+          appendFirst = undefined,
+          sourceSeen = undefined,
+          bufferStart = undefined,
+          bufferEnd = undefined;
+      this.source.each(function (line) {
+        if (line.appendToBuffer) {
+          if (bufferStart) {
+            line.prepend('  + ');
+          } else {
+            bufferStart = line;
+          }
+          bufferEnd = line;
+        } else {
+          if (bufferStart) {
+            if (!sourceSeen) {
+              appendFirst = true;
+            } else {
+              bufferStart.prepend('buffer += ');
+            }
+            bufferEnd.add(';');
+            bufferStart = bufferEnd = undefined;

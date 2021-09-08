@@ -1,0 +1,322 @@
+#!/bin/bash -i
+#
+# Script d'installation ruTorrent / Nginx
+# Auteur : Ex_Rat
+#
+# Nécessite Debian 7/8/9 - 64 bits & un serveur fraîchement installé
+#
+# Multi-utilisateurs
+# Inclus VsFTPd (ftp & ftps sur le port 21), Fail2ban (avec conf nginx, ftp & ssh)
+# Seedbox-Manager, Auteurs: Magicalex, Hydrog3n et Backtoback
+#
+# Tiré du tutoriel de Magicalex pour mondedie.fr disponible ici:
+# http://mondedie.fr/viewtopic.php?id=5302
+#
+# Merci Aliochka & Meister pour les conf de Munin et VsFTPd
+# à Albaret pour le coup de main sur la gestion d'users, LetsGo67 pour ses rectifs et
+# Jedediah pour avoir joué avec le html/css du thème.
+# Aux traducteurs: Sophie, Spectre, Hardware, Zarev, SirGato, MiguelSam, Hierra.
+#
+# Installation:
+#
+# apt-get update && apt-get upgrade -y
+# apt-get install git-core -y
+#
+# cd /tmp
+# git clone https://github.com/exrat/rutorrent-essential
+# cd rutorrent-essential
+# chmod a+x essential.sh && ./essential.sh
+#
+# Pour gérer vos utilisateurs ultérieurement, il vous suffit de relancer le script
+#
+# This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License
+
+
+# includes
+INCLUDES="includes"
+# shellcheck source=/dev/null
+. "$INCLUDES"/variables.sh
+# shellcheck source=/dev/null
+. "$INCLUDES"/langues.sh
+# shellcheck source=/dev/null
+. "$INCLUDES"/functions.sh
+
+# contrôle droits utilisateur & OS
+FONCCONTROL
+FONCBASHRC
+
+# contrôle installation
+if [ ! -f "$NGINXENABLE"/rutorrent.conf ]; then
+	# log de l'installation
+	exec > >(tee "/tmp/install.log") 2>&1
+	# liste users en arguments
+	TESTARG=$(echo "$ARG" | tr -s ' ' '\n' | grep :)
+	if [ ! -z "$TESTARG" ]; then
+		echo "$ARG" | tr -s ' ' '\n' | grep : > "$ARGFILE"
+	fi
+
+	####################################
+	# lancement installation ruTorrent #
+	####################################
+
+	# message d'accueil
+	clear
+	echo ""; set "102"; FONCTXT "$1"; echo -e "${CBLUE}$TXT1${CEND}"; echo ""
+	# shellcheck source=/dev/null
+	. "$INCLUDES"/logo.sh
+
+	if [ ! -s "$ARGFILE" ]; then
+		echo ""; set "298"; FONCTXT "$1"; echo -e "${CYELLOW}$TXT1${CEND}"
+		set "106"; FONCTXT "$1"; echo -e "${CYELLOW}$TXT1${CEND}"; echo ""
+
+		FONCUSER # demande nom user
+		echo ""
+		FONCPASS # demande mot de passe
+	else
+		FONCARG
+	fi
+
+	PORT=5001
+
+	# choix installation vsftpd & seedbox-manager
+	if [ -z "$ARGSBM" ]; then
+		echo ""; set "300"; FONCTXT "$1"; echo -n -e "${CGREEN}$TXT1 ${CEND}"
+		read -r SEEDBOXMANAGER
+	else
+		if [ "$ARGSBM" = "sbm-off" ]; then
+			SEEDBOXMANAGER="n"
+		else
+			SEEDBOXMANAGER="y"
+		fi
+	fi
+
+	if FONCYES "$SEEDBOXMANAGER"; then
+		if [ -z "$ARGMAIL" ]; then
+			while :; do
+				echo ""; set "124"; FONCTXT "$1"; echo -e "${CGREEN}$TXT1 ${CEND}"
+				read -r INSTALLMAIL
+				if [ "$INSTALLMAIL" = "" ]; then
+					EMAIL=contact@exemple.com
+					break
+				else
+					if [[ "$INSTALLMAIL" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]*$ ]]; then
+						EMAIL="$INSTALLMAIL"
+						break
+					else
+						echo ""; set "126"; FONCTXT "$1"; echo -e "${CRED}$TXT1${CEND}"
+					fi
+				fi
+			done
+		else
+			EMAIL="$ARGMAIL"
+
+		fi
+	fi
+
+	if [ -z "$ARGFTP" ]; then
+		echo ""; set "128"; FONCTXT "$1"; echo -n -e "${CGREEN}$TXT1 ${CEND}"
+		# shellcheck disable=SC2034
+		read -r SERVFTP
+	else
+		if [ "$ARGFTP" = "ftp-off" ]; then
+			SERVFTP="n"
+		else
+			SERVFTP="y"
+		fi
+	fi
+
+	# récupération 5% root sur /home ou /home/user si présent
+	FSHOME=$(df -h | grep /home | cut -c 6-9)
+	if [ "$FSHOME" = "" ]; then
+		echo
+	else
+		tune2fs -m 0 /dev/"$FSHOME" &> /dev/null
+		mount -o remount /home &> /dev/null
+	fi
+
+	FONCFSUSER "$USER"
+
+	# variable passe nginx
+	PASSNGINX=${USERPWD}
+
+	# ajout utilisateur
+	useradd -M -s /bin/bash "$USER"
+
+	# création mot de passe utilisateur
+	echo "${USER}:${USERPWD}" | chpasswd
+
+	# anti-bug /home/user déjà existant
+	mkdir -p /home/"$USER"
+	chown -R "$USER":"$USER" /home/"$USER"
+
+	# variable utilisateur majuscule
+	USERMAJ=$(echo "$USER" | tr "[:lower:]" "[:upper:]")
+
+	# récupération ip serveur
+	if [[ $(echo "$VERSION" "9" | awk '{print ($1 >= $2)}') == 1 ]]; then
+		apt-get install -y net-tools
+	fi
+	FONCIP
+
+	# récupération threads & sécu -j illimité
+	THREAD=$(grep -c processor < /proc/cpuinfo)
+	if [ "$THREAD" = "" ]; then
+		THREAD=1
+	fi
+
+	# ajout dépôts
+	# shellcheck source=/dev/null
+	. "$INCLUDES"/deb.sh
+
+	# bind9 & dhcp
+	if [ ! -d /etc/bind ]; then
+		rm /etc/init.d/bind9 &> /dev/null
+		apt-get install -y bind9
+	fi
+
+	if [ -f /etc/dhcp/dhclient.conf ]; then
+		sed -i "s/#prepend domain-name-servers 127.0.0.1;/prepend domain-name-servers 127.0.0.1;/g;" /etc/dhcp/dhclient.conf
+	fi
+
+	cp -f "$FILES"/bind/named.conf.options /etc/bind/named.conf.options
+
+	sed -i '/127.0.0.1/d' /etc/resolv.conf # pour éviter doublon
+	echo "nameserver 127.0.0.1" >> /etc/resolv.conf
+	FONCSERVICE restart bind9
+
+	# installation des paquets
+	apt-get update && apt-get upgrade -y
+	echo ""; set "132" "134"; FONCTXT "$1" "$2"; echo -e "${CBLUE}$TXT1${CEND}${CGREEN}$TXT2${CEND}"; echo ""
+
+	apt-get install -y \
+		htop \
+		openssl \
+		apt-utils \
+		python \
+		build-essential \
+		libssl-dev \
+		pkg-config \
+		automake \
+		libcppunit-dev \
+		libtool whois \
+		libcurl4-openssl-dev \
+		libsigc++-2.0-dev \
+		libncurses5-dev \
+		vim \
+		nano \
+		ccze \
+		screen \
+		subversion \
+		apache2-utils \
+		curl \
+		"$PHPNAME" \
+		"$PHPNAME"-cli \
+		"$PHPNAME"-fpm \
+		"$PHPNAME"-curl \
+		"$PHPNAME"-geoip \
+		unrar \
+		rar \
+		zip \
+		mktorrent \
+		fail2ban \
+		ntp \
+		ntpdate \
+		ffmpeg \
+		aptitude \
+		dnsutils \
+		irssi \
+		libarchive-zip-perl \
+		libjson-perl \
+		libjson-xs-perl \
+		libxml-libxslt-perl \
+		nginx \
+		libmms0 \
+		pastebinit \
+		sox \
+		libsox-fmt-mp3 \
+		zlib1g-dev \
+		gawk \
+		# reserve zap xlmrpc debian 8/9
+		# libxmlrpc-c++8-dev \
+		libncursesw5-dev
+
+		if [[ "$VERSION" =~ 7.* ]]; then
+			apt-get install -y \
+				libtinyxml2-0.0.0 \
+				libglib2.0-0
+		elif [[ "$VERSION" =~ 8.* ]]; then
+			apt-get install -y \
+				# "$PHPNAME"-xml \
+				# "$PHPNAME"-mbstring \
+				libtinyxml2-2 \
+				libsox-fmt-all
+		elif [[ "$VERSION" =~ 9.* ]]; then
+			apt-get install -y \
+				libtinyxml2-4 \
+				"$PHPNAME"-xml \
+				"$PHPNAME"-mbstring \
+				zlib1g-dev \
+				unzip \
+				libsox-fmt-all
+		fi
+
+	echo ""; set "136" "134"; FONCTXT "$1" "$2"; echo -e "${CBLUE}$TXT1${CEND}${CGREEN}$TXT2${CEND}"; echo ""
+
+	# génération clé 2048 bits
+	openssl dhparam -out dhparams.pem 2048 >/dev/null 2>&1 &
+
+	# téléchargement complément favicons
+	wget -T 10 -t 3 http://www.bonobox.net/script/favicon.tar.gz || wget -T 10 -t 3 http://alt.bonobox.net/favicon.tar.gz
+	tar xzfv favicon.tar.gz
+
+	# configuration ntp & réglage heure fr
+	if [ "$GENLANG" = "fr" ]; then
+		echo "Europe/Paris" > /etc/timezone
+		cp -f /usr/share/zoneinfo/Europe/Paris /etc/localtime
+
+		sed -i "s/server 0/#server 0/g;" /etc/ntp.conf
+		sed -i "s/server 1/#server 1/g;" /etc/ntp.conf
+		sed -i "s/server 2/#server 2/g;" /etc/ntp.conf
+		sed -i "s/server 3/#server 3/g;" /etc/ntp.conf
+
+		cat <<- EOF >> /etc/ntp.conf
+
+			server 0.fr.pool.ntp.org
+			server 1.fr.pool.ntp.org
+			server 2.fr.pool.ntp.org
+			server 3.fr.pool.ntp.org
+		EOF
+
+		ntpdate -d 0.fr.pool.ntp.org
+	fi
+
+	# installation xmlrpc libtorrent rtorrent
+	cd /tmp || exit
+	git clone https://github.com/mirror/xmlrpc-c.git
+
+	cd xmlrpc-c/stable || exit
+	./configure #--disable-cplusplus
+	make -j "$THREAD"
+	make install
+	echo ""; set "140" "134"; FONCTXT "$1" "$2"; echo -e "${CBLUE}$TXT1${CEND}${CGREEN}$TXT2${CEND}"; echo ""
+
+	# clone rtorrent et libtorrent
+	cd /tmp || exit
+	git clone https://github.com/rakshasa/libtorrent.git
+	git clone https://github.com/rakshasa/rtorrent.git
+
+	# compilation libtorrent
+	cd libtorrent || exit
+	git checkout "$LIBTORRENT"
+	git cherry-pick 7b29b6b
+
+	# if [[ $(echo "$VERSION" "9" | awk '{print ($1 >= $2)}') == 1 ]]; then
+		# cp -f "$FILES"/rutorrent/configure.ac /tmp/libtorrent/configure.ac
+		# cp -f "$FILES"/rutorrent/diffie_hellman.cc /tmp/libtorrent/src/utils/diffie_hellman.cc
+	# fi
+
+	./autogen.sh
+	./configure --disable-debug
+	make -j "$THREAD"
+	make install
+	echo ""; set "142" "134"; FONCTXT "

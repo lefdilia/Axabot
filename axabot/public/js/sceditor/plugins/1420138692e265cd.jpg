@@ -1,0 +1,308 @@
+'use strict';
+
+var Long = require('./long');
+
+var PARSE_STRING_REGEXP = /^(\+|-)?(\d+|(\d*\.\d*))?(E|e)?([-+])?(\d+)?$/;
+var PARSE_INF_REGEXP = /^(\+|-)?(Infinity|inf)$/i;
+var PARSE_NAN_REGEXP = /^(\+|-)?NaN$/i;
+
+var EXPONENT_MAX = 6111;
+var EXPONENT_MIN = -6176;
+var EXPONENT_BIAS = 6176;
+var MAX_DIGITS = 34;
+
+// Nan value bits as 32 bit values (due to lack of longs)
+var NAN_BUFFER = [
+  0x7c,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00
+].reverse();
+// Infinity value bits 32 bit values (due to lack of longs)
+var INF_NEGATIVE_BUFFER = [
+  0xf8,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00
+].reverse();
+var INF_POSITIVE_BUFFER = [
+  0x78,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x00
+].reverse();
+
+var EXPONENT_REGEX = /^([-+])?(\d+)?$/;
+
+// Detect if the value is a digit
+var isDigit = function(value) {
+  return !isNaN(parseInt(value, 10));
+};
+
+// Divide two uint128 values
+var divideu128 = function(value) {
+  var DIVISOR = Long.fromNumber(1000 * 1000 * 1000);
+  var _rem = Long.fromNumber(0);
+  var i = 0;
+
+  if (!value.parts[0] && !value.parts[1] && !value.parts[2] && !value.parts[3]) {
+    return { quotient: value, rem: _rem };
+  }
+
+  for (i = 0; i <= 3; i++) {
+    // Adjust remainder to match value of next dividend
+    _rem = _rem.shiftLeft(32);
+    // Add the divided to _rem
+    _rem = _rem.add(new Long(value.parts[i], 0));
+    value.parts[i] = _rem.div(DIVISOR).low_;
+    _rem = _rem.modulo(DIVISOR);
+  }
+
+  return { quotient: value, rem: _rem };
+};
+
+// Multiply two Long values and return the 128 bit value
+var multiply64x2 = function(left, right) {
+  if (!left && !right) {
+    return { high: Long.fromNumber(0), low: Long.fromNumber(0) };
+  }
+
+  var leftHigh = left.shiftRightUnsigned(32);
+  var leftLow = new Long(left.getLowBits(), 0);
+  var rightHigh = right.shiftRightUnsigned(32);
+  var rightLow = new Long(right.getLowBits(), 0);
+
+  var productHigh = leftHigh.multiply(rightHigh);
+  var productMid = leftHigh.multiply(rightLow);
+  var productMid2 = leftLow.multiply(rightHigh);
+  var productLow = leftLow.multiply(rightLow);
+
+  productHigh = productHigh.add(productMid.shiftRightUnsigned(32));
+  productMid = new Long(productMid.getLowBits(), 0)
+    .add(productMid2)
+    .add(productLow.shiftRightUnsigned(32));
+
+  productHigh = productHigh.add(productMid.shiftRightUnsigned(32));
+  productLow = productMid.shiftLeft(32).add(new Long(productLow.getLowBits(), 0));
+
+  // Return the 128 bit result
+  return { high: productHigh, low: productLow };
+};
+
+var lessThan = function(left, right) {
+  // Make values unsigned
+  var uhleft = left.high_ >>> 0;
+  var uhright = right.high_ >>> 0;
+
+  // Compare high bits first
+  if (uhleft < uhright) {
+    return true;
+  } else if (uhleft === uhright) {
+    var ulleft = left.low_ >>> 0;
+    var ulright = right.low_ >>> 0;
+    if (ulleft < ulright) return true;
+  }
+
+  return false;
+};
+
+// var longtoHex = function(value) {
+//   var buffer = new Buffer(8);
+//   var index = 0;
+//   // Encode the low 64 bits of the decimal
+//   // Encode low bits
+//   buffer[index++] = value.low_ & 0xff;
+//   buffer[index++] = (value.low_ >> 8) & 0xff;
+//   buffer[index++] = (value.low_ >> 16) & 0xff;
+//   buffer[index++] = (value.low_ >> 24) & 0xff;
+//   // Encode high bits
+//   buffer[index++] = value.high_ & 0xff;
+//   buffer[index++] = (value.high_ >> 8) & 0xff;
+//   buffer[index++] = (value.high_ >> 16) & 0xff;
+//   buffer[index++] = (value.high_ >> 24) & 0xff;
+//   return buffer.reverse().toString('hex');
+// };
+
+// var int32toHex = function(value) {
+//   var buffer = new Buffer(4);
+//   var index = 0;
+//   // Encode the low 64 bits of the decimal
+//   // Encode low bits
+//   buffer[index++] = value & 0xff;
+//   buffer[index++] = (value >> 8) & 0xff;
+//   buffer[index++] = (value >> 16) & 0xff;
+//   buffer[index++] = (value >> 24) & 0xff;
+//   return buffer.reverse().toString('hex');
+// };
+
+/**
+ * A class representation of the BSON Decimal128 type.
+ *
+ * @class
+ * @param {Buffer} bytes a buffer containing the raw Decimal128 bytes.
+ * @return {Double}
+ */
+var Decimal128 = function(bytes) {
+  this._bsontype = 'Decimal128';
+  this.bytes = bytes;
+};
+
+/**
+ * Create a Decimal128 instance from a string representation
+ *
+ * @method
+ * @param {string} string a numeric string representation.
+ * @return {Decimal128} returns a Decimal128 instance.
+ */
+Decimal128.fromString = function(string) {
+  // Parse state tracking
+  var isNegative = false;
+  var sawRadix = false;
+  var foundNonZero = false;
+
+  // Total number of significant digits (no leading or trailing zero)
+  var significantDigits = 0;
+  // Total number of significand digits read
+  var nDigitsRead = 0;
+  // Total number of digits (no leading zeros)
+  var nDigits = 0;
+  // The number of the digits after radix
+  var radixPosition = 0;
+  // The index of the first non-zero in *str*
+  var firstNonZero = 0;
+
+  // Digits Array
+  var digits = [0];
+  // The number of digits in digits
+  var nDigitsStored = 0;
+  // Insertion pointer for digits
+  var digitsInsert = 0;
+  // The index of the first non-zero digit
+  var firstDigit = 0;
+  // The index of the last digit
+  var lastDigit = 0;
+
+  // Exponent
+  var exponent = 0;
+  // loop index over array
+  var i = 0;
+  // The high 17 digits of the significand
+  var significandHigh = [0, 0];
+  // The low 17 digits of the significand
+  var significandLow = [0, 0];
+  // The biased exponent
+  var biasedExponent = 0;
+
+  // Read index
+  var index = 0;
+
+  // Trim the string
+  string = string.trim();
+
+  // Naively prevent against REDOS attacks.
+  // TODO: implementing a custom parsing for this, or refactoring the regex would yield
+  //       further gains.
+  if (string.length >= 7000) {
+    throw new Error('' + string + ' not a valid Decimal128 string');
+  }
+
+  // Results
+  var stringMatch = string.match(PARSE_STRING_REGEXP);
+  var infMatch = string.match(PARSE_INF_REGEXP);
+  var nanMatch = string.match(PARSE_NAN_REGEXP);
+
+  // Validate the string
+  if ((!stringMatch && !infMatch && !nanMatch) || string.length === 0) {
+    throw new Error('' + string + ' not a valid Decimal128 string');
+  }
+
+  // Check if we have an illegal exponent format
+  if (stringMatch && stringMatch[4] && stringMatch[2] === undefined) {
+    throw new Error('' + string + ' not a valid Decimal128 string');
+  }
+
+  // Get the negative or positive sign
+  if (string[index] === '+' || string[index] === '-') {
+    isNegative = string[index++] === '-';
+  }
+
+  // Check if user passed Infinity or NaN
+  if (!isDigit(string[index]) && string[index] !== '.') {
+    if (string[index] === 'i' || string[index] === 'I') {
+      return new Decimal128(new Buffer(isNegative ? INF_NEGATIVE_BUFFER : INF_POSITIVE_BUFFER));
+    } else if (string[index] === 'N') {
+      return new Decimal128(new Buffer(NAN_BUFFER));
+    }
+  }
+
+  // Read all the digits
+  while (isDigit(string[index]) || string[index] === '.') {
+    if (string[index] === '.') {
+      if (sawRadix) {
+        return new Decimal128(new Buffer(NAN_BUFFER));
+      }
+
+      sawRadix = true;
+      index = index + 1;
+      continue;
+    }
+
+    if (nDigitsStored < 34) {
+      if (string[index] !== '0' || foundNonZero) {
+        if (!foundNonZero) {
+          firstNonZero = nDigitsRead;
+        }
+
+        foundNonZero = true;
+
+        // Only store 34 digits
+        digits[digitsInsert++] = parseInt(string[index], 10);
+        nDigitsStored = nDigitsStored + 1;
+      }
+    }
+
+    if (foundNonZero) {
+      nDigits = nDigits + 1;
+    }
+
+    if (sawRadix) {
+      radixPosition = radixPosition + 1;
+    }
+
+    nDigitsRead = nDigitsRead + 1

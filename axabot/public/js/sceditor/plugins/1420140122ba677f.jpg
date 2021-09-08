@@ -1,0 +1,511 @@
+;(function(){
+
+
+// CommonJS require()
+
+function require(p){
+    var path = require.resolve(p)
+      , mod = require.modules[path];
+    if (!mod) throw new Error('failed to require "' + p + '"');
+    if (!mod.exports) {
+      mod.exports = {};
+      mod.call(mod.exports, mod, mod.exports, require.relative(path));
+    }
+    return mod.exports;
+  }
+
+require.modules = {};
+
+require.resolve = function (path){
+    var orig = path
+      , reg = path + '.js'
+      , index = path + '/index.js';
+    return require.modules[reg] && reg
+      || require.modules[index] && index
+      || orig;
+  };
+
+require.register = function (path, fn){
+    require.modules[path] = fn;
+  };
+
+require.relative = function (parent) {
+    return function(p){
+      if ('.' != p.charAt(0)) return require(p);
+      
+      var path = parent.split('/')
+        , segs = p.split('/');
+      path.pop();
+      
+      for (var i = 0; i < segs.length; i++) {
+        var seg = segs[i];
+        if ('..' == seg) path.pop();
+        else if ('.' != seg) path.push(seg);
+      }
+
+      return require(path.join('/'));
+    };
+  };
+
+
+require.register("browser/debug.js", function(module, exports, require){
+
+module.exports = function(type){
+  return function(){
+    
+  }
+};
+}); // module: browser/debug.js
+
+require.register("browser/diff.js", function(module, exports, require){
+
+}); // module: browser/diff.js
+
+require.register("browser/events.js", function(module, exports, require){
+
+/**
+ * Module exports.
+ */
+
+exports.EventEmitter = EventEmitter;
+
+/**
+ * Check if `obj` is an array.
+ */
+
+function isArray(obj) {
+  return '[object Array]' == {}.toString.call(obj);
+}
+
+/**
+ * Event emitter constructor.
+ *
+ * @api public
+ */
+
+function EventEmitter(){};
+
+/**
+ * Adds a listener.
+ *
+ * @api public
+ */
+
+EventEmitter.prototype.on = function (name, fn) {
+  if (!this.$events) {
+    this.$events = {};
+  }
+
+  if (!this.$events[name]) {
+    this.$events[name] = fn;
+  } else if (isArray(this.$events[name])) {
+    this.$events[name].push(fn);
+  } else {
+    this.$events[name] = [this.$events[name], fn];
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.addListener = EventEmitter.prototype.on;
+
+/**
+ * Adds a volatile listener.
+ *
+ * @api public
+ */
+
+EventEmitter.prototype.once = function (name, fn) {
+  var self = this;
+
+  function on () {
+    self.removeListener(name, on);
+    fn.apply(this, arguments);
+  };
+
+  on.listener = fn;
+  this.on(name, on);
+
+  return this;
+};
+
+/**
+ * Removes a listener.
+ *
+ * @api public
+ */
+
+EventEmitter.prototype.removeListener = function (name, fn) {
+  if (this.$events && this.$events[name]) {
+    var list = this.$events[name];
+
+    if (isArray(list)) {
+      var pos = -1;
+
+      for (var i = 0, l = list.length; i < l; i++) {
+        if (list[i] === fn || (list[i].listener && list[i].listener === fn)) {
+          pos = i;
+          break;
+        }
+      }
+
+      if (pos < 0) {
+        return this;
+      }
+
+      list.splice(pos, 1);
+
+      if (!list.length) {
+        delete this.$events[name];
+      }
+    } else if (list === fn || (list.listener && list.listener === fn)) {
+      delete this.$events[name];
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Removes all listeners for an event.
+ *
+ * @api public
+ */
+
+EventEmitter.prototype.removeAllListeners = function (name) {
+  if (name === undefined) {
+    this.$events = {};
+    return this;
+  }
+
+  if (this.$events && this.$events[name]) {
+    this.$events[name] = null;
+  }
+
+  return this;
+};
+
+/**
+ * Gets all listeners for a certain event.
+ *
+ * @api public
+ */
+
+EventEmitter.prototype.listeners = function (name) {
+  if (!this.$events) {
+    this.$events = {};
+  }
+
+  if (!this.$events[name]) {
+    this.$events[name] = [];
+  }
+
+  if (!isArray(this.$events[name])) {
+    this.$events[name] = [this.$events[name]];
+  }
+
+  return this.$events[name];
+};
+
+/**
+ * Emits an event.
+ *
+ * @api public
+ */
+
+EventEmitter.prototype.emit = function (name) {
+  if (!this.$events) {
+    return false;
+  }
+
+  var handler = this.$events[name];
+
+  if (!handler) {
+    return false;
+  }
+
+  var args = [].slice.call(arguments, 1);
+
+  if ('function' == typeof handler) {
+    handler.apply(this, args);
+  } else if (isArray(handler)) {
+    var listeners = handler.slice();
+
+    for (var i = 0, l = listeners.length; i < l; i++) {
+      listeners[i].apply(this, args);
+    }
+  } else {
+    return false;
+  }
+
+  return true;
+};
+}); // module: browser/events.js
+
+require.register("browser/fs.js", function(module, exports, require){
+
+}); // module: browser/fs.js
+
+require.register("browser/path.js", function(module, exports, require){
+
+}); // module: browser/path.js
+
+require.register("browser/progress.js", function(module, exports, require){
+
+/**
+ * Expose `Progress`.
+ */
+
+module.exports = Progress;
+
+/**
+ * Initialize a new `Progress` indicator.
+ */
+
+function Progress() {
+  this.percent = 0;
+  this.size(0);
+  this.fontSize(11);
+  this.font('helvetica, arial, sans-serif');
+}
+
+/**
+ * Set progress size to `n`.
+ *
+ * @param {Number} n
+ * @return {Progress} for chaining
+ * @api public
+ */
+
+Progress.prototype.size = function(n){
+  this._size = n;
+  return this;
+};
+
+/**
+ * Set text to `str`.
+ *
+ * @param {String} str
+ * @return {Progress} for chaining
+ * @api public
+ */
+
+Progress.prototype.text = function(str){
+  this._text = str;
+  return this;
+};
+
+/**
+ * Set font size to `n`.
+ *
+ * @param {Number} n
+ * @return {Progress} for chaining
+ * @api public
+ */
+
+Progress.prototype.fontSize = function(n){
+  this._fontSize = n;
+  return this;
+};
+
+/**
+ * Set font `family`.
+ *
+ * @param {String} family
+ * @return {Progress} for chaining
+ */
+
+Progress.prototype.font = function(family){
+  this._font = family;
+  return this;
+};
+
+/**
+ * Update percentage to `n`.
+ *
+ * @param {Number} n
+ * @return {Progress} for chaining
+ */
+
+Progress.prototype.update = function(n){
+  this.percent = n;
+  return this;
+};
+
+/**
+ * Draw on `ctx`.
+ *
+ * @param {CanvasRenderingContext2d} ctx
+ * @return {Progress} for chaining
+ */
+
+Progress.prototype.draw = function(ctx){
+  var percent = Math.min(this.percent, 100)
+    , size = this._size
+    , half = size / 2
+    , x = half
+    , y = half
+    , rad = half - 1
+    , fontSize = this._fontSize;
+
+  ctx.font = fontSize + 'px ' + this._font;
+
+  var angle = Math.PI * 2 * (percent / 100);
+  ctx.clearRect(0, 0, size, size);
+
+  // outer circle
+  ctx.strokeStyle = '#9f9f9f';
+  ctx.beginPath();
+  ctx.arc(x, y, rad, 0, angle, false);
+  ctx.stroke();
+
+  // inner circle
+  ctx.strokeStyle = '#eee';
+  ctx.beginPath();
+  ctx.arc(x, y, rad - 1, 0, angle, true);
+  ctx.stroke();
+
+  // text
+  var text = this._text || (percent | 0) + '%'
+    , w = ctx.measureText(text).width;
+
+  ctx.fillText(
+      text
+    , x - w / 2 + 1
+    , y + fontSize / 2 - 1);
+
+  return this;
+};
+
+}); // module: browser/progress.js
+
+require.register("browser/tty.js", function(module, exports, require){
+
+exports.isatty = function(){
+  return true;
+};
+
+exports.getWindowSize = function(){
+  return [window.innerHeight, window.innerWidth];
+};
+}); // module: browser/tty.js
+
+require.register("context.js", function(module, exports, require){
+
+/**
+ * Expose `Context`.
+ */
+
+module.exports = Context;
+
+/**
+ * Initialize a new `Context`.
+ *
+ * @api private
+ */
+
+function Context(){}
+
+/**
+ * Set or get the context `Runnable` to `runnable`.
+ *
+ * @param {Runnable} runnable
+ * @return {Context}
+ * @api private
+ */
+
+Context.prototype.runnable = function(runnable){
+  if (0 == arguments.length) return this._runnable;
+  this.test = this._runnable = runnable;
+  return this;
+};
+
+/**
+ * Set test timeout `ms`.
+ *
+ * @param {Number} ms
+ * @return {Context} self
+ * @api private
+ */
+
+Context.prototype.timeout = function(ms){
+  this.runnable().timeout(ms);
+  return this;
+};
+
+/**
+ * Set test slowness threshold `ms`.
+ *
+ * @param {Number} ms
+ * @return {Context} self
+ * @api private
+ */
+
+Context.prototype.slow = function(ms){
+  this.runnable().slow(ms);
+  return this;
+};
+
+/**
+ * Inspect the context void of `._runnable`.
+ *
+ * @return {String}
+ * @api private
+ */
+
+Context.prototype.inspect = function(){
+  return JSON.stringify(this, function(key, val){
+    if ('_runnable' == key) return;
+    if ('test' == key) return;
+    return val;
+  }, 2);
+};
+
+}); // module: context.js
+
+require.register("hook.js", function(module, exports, require){
+
+/**
+ * Module dependencies.
+ */
+
+var Runnable = require('./runnable');
+
+/**
+ * Expose `Hook`.
+ */
+
+module.exports = Hook;
+
+/**
+ * Initialize a new `Hook` with the given `title` and callback `fn`.
+ *
+ * @param {String} title
+ * @param {Function} fn
+ * @api private
+ */
+
+function Hook(title, fn) {
+  Runnable.call(this, title, fn);
+  this.type = 'hook';
+}
+
+/**
+ * Inherit from `Runnable.prototype`.
+ */
+
+Hook.prototype = new Runnable;
+Hook.prototype.constructor = Hook;
+
+
+/**
+ * Get or set the test `err`.
+ *
+ * @param {Error} err
+ * @return {Error}
+ * @api public
+ */
+
+Hook.prototype.error = function(err){
+  if (0 == arguments.length) {
+  

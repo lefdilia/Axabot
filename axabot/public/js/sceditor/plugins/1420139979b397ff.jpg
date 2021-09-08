@@ -1,0 +1,762 @@
+var assert = require("assert"),
+GSV = require("../index.js");
+
+describe('Positions', function() {
+
+    it('must be a valid position object', function() {
+        assert(GSV.isPosition([2,3]));
+    });
+
+    it('must be an array', function() {
+        assert.equal(false, GSV.isPosition("adf"));
+    });
+
+    it('must be at least two elements', function() {
+        assert.equal(false, GSV.isPosition([2]));
+    });
+});
+
+describe("GeoJSON Objects", function(){
+    
+    it('must have a member with the name "type"', function() {
+        gj = {"test": "1"};
+        assert.equal(false, GSV.isGeoJSONObject(gj));
+    });
+
+    describe("type member", function(){
+        it('must be one of: "Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", "GeometryCollection", "Feature", or "FeatureCollection"', function() {
+            
+            gj = {type: "point"};
+            assert.equal(false, GSV.isGeoJSONObject(gj));
+        });
+    });
+    
+    describe("Geometry Objects", function(){
+
+        describe("type member", function(){
+            it('must be one of "Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", or "GeometryCollection"', function() {
+                
+                gj = {type: "Feature"};
+                assert.equal(false, GSV.isGeometryObject(gj));
+            });
+        });
+
+
+        describe("Point", function(){
+            it('must be a valid Point Object', function() {
+               gj = {type: "Point", coordinates: [2,3]};
+               assert(GSV.isPoint(gj));
+            });
+
+            it('member type must be "Point"', function() {
+               gj = {type: "Polygon", coordinates: [2,3]};
+               assert.equal(false, GSV.isPoint(gj));
+            });
+
+            it('must have a member with the name "coordinates"', function(){
+               gj = {type: "Point", coordinate: [2,3]};
+               assert.equal(false, GSV.isPoint(gj));
+            });
+
+            describe("type coordinates", function(){
+                it('must be a single position', function() {
+                   gj = {type: "Point", coordinates: [2]};
+                   assert.equal(false, GSV.isPoint(gj));
+                });
+            });
+        });
+
+        describe("MultiPoint", function(){
+            it('must be a valid MultiPoint Object', function() {
+               gj = {type: "MultiPoint", coordinates: [[2,3],[5,6]]};
+               assert(GSV.isMultiPoint(gj));
+            });
+
+            it('member type must be "MultiPoint"', function() {
+               gj = {type: "Point", coordinates: [[2,3],[5,6]]};
+               assert.equal(false, GSV.isMultiPoint(gj));
+            });
+
+            it('must have a member with the name "coordinates"', function(){
+               gj = {type: "MultiPoint", coordinate: [2,3]};
+               assert.equal(false, GSV.isPoint(gj));
+            });
+
+            describe("type coordinates", function(){
+                it('must be an array of positions', function() {
+                   gj = {type: "MultiPoint", coordinates: [[2,3],[5]]};
+                   assert.equal(false, GSV.isMultiPoint(gj));
+                });
+            });
+        });
+
+        describe("Linestring", function(){
+
+            it('must be a valid LineString Object', function() {
+                var ValidLineString = {
+                    "type": "LineString",
+                    "coordinates": [
+                        [102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]
+                        ]
+                };
+               assert(GSV.isLineString(ValidLineString));
+            });
+
+            it('member type must be "LineString"', function() {
+               gj = {type: "lineString", coordinates: [[2,3],[5,6]]};
+               assert.equal(false, GSV.isLineString(gj));
+            });
+
+            it('must have a member with the name "coordinates"', function(){
+               gj = {type: "LineString", coordinate: [[102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]]};
+               assert.equal(false, GSV.isLineString(gj));
+            });
+
+            describe("type coordinates", function(){
+                it('must be an array of positions', function() {
+                   gj = {type: "LineString", coordinate: [[2,3],[5]]};
+                   assert.equal(false, GSV.isLineString(gj));
+                });
+
+                it('must be at least two elements', function() {
+                   gj = {type: "LineString", coordinates: [[2,3]]};
+                   assert.equal(false, GSV.isLineString(gj));
+                });
+            });
+        });
+
+        describe("MutliLineString", function(){
+
+            it('must be a valid MutiLineString Object', function() {
+                var validMutlineString = { 
+                    "type": "MultiLineString",
+                    "coordinates": [
+                      [ [100.0, 0.0], [101.0, 1.0] ],
+                      [ [102.0, 2.0], [103.0, 3.0] ]
+                    ]
+                };
+               assert(GSV.isMultiLineString(validMutlineString));
+            });
+
+            it('member type must be "MutliLineString"', function() {
+
+                var invalidMutlineString = { 
+                    "type": "multiLineString",
+                    "coordinates": [
+                      [ [100.0, 0.0], [101.0, 1.0] ],
+                      [ [102.0, 2.0], [103.0, 3.0] ]
+                    ]
+                };
+               assert.equal(false, GSV.isMultiLineString(invalidMutlineString));
+            });
+
+            it('must have a member with the name "coordinates"', function(){
+
+                var invalidMutlineString = { 
+                    "type": "MultiLineString",
+                    "coordinate": [
+                      [ [100.0, 0.0], [101.0, 1.0] ],
+                      [ [102.0, 2.0], [103.0, 3.0] ]
+                    ]
+                };
+
+               assert.equal(false, GSV.isMultiLineString(invalidMutlineString));
+            });
+
+            describe("type coordinates", function(){
+                it('must be an array of LineString coordinate arrays', function() {
+                    
+                    var invalidMutlineString = { 
+                        "type": "MultiLineString",
+                        "coordinate": [
+                          [ [100.0, 0.0], [101.0] ],
+                          [ [102.0, 2.0], [103.0, 3.0] ]
+                        ]
+                    };
+
+                   assert.equal(false, GSV.isMultiLineString(invalidMutlineString));
+                });
+            });
+        });
+
+        describe('Polygon', function() {
+            it('must be a valid Polygon Object', function() {
+                var validPolygon = {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ]
+                    ]
+                };
+                assert(GSV.isPolygon(validPolygon));
+            });
+
+            it('member type must be "Polygon"', function() {
+
+                var invalidPolygon = {
+                    "type": "polygon",
+                    "coordinates": [
+                        [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ]
+                    ]
+                };
+                assert.equal(false, GSV.isPolygon(invalidPolygon));
+            });
+
+            it('must have a member with the name "coordinates"', function(){
+                var invalidPolygon = {
+                    "type": "Polygon",
+                    "coordinate": [
+                        [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ]
+                    ]
+                };
+                assert.equal(false, GSV.isPolygon(invalidPolygon));
+            });
+
+            describe("type coordinates", function(){
+                it('must be an array of LinearRing coordinate arrays', function() {
+                    var invalidPolygon = {
+                        "type": "Polygon",
+                        "coordinates": "test" 
+                    };
+                    assert.equal(false, GSV.isPolygon(invalidPolygon));
+                });
+
+                describe('LinearRing', function() {
+                    it('must be a LineString with 4 or more positions', function() {
+                        var invalidPolygon = {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ],
+                                [ [100.0, 0.0],  [100.0, 1.0], [100.0, 0.0] ]
+                            ]
+                        };
+                        assert.equal(false, GSV.isPolygon(invalidPolygon));
+                    });
+
+                    it('The first and last positions must be equivalent (represent equivalent points)', function() {
+                        var invalidPolygon = {
+                              "type": "Polygon",
+                              "coordinates": [
+                            [ [100.0, 1.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0] ]
+                            ]
+                        };
+                        assert.equal(false, GSV.isPolygon(invalidPolygon));
+
+                    });
+                });
+            });
+        });
+
+        describe('MultiPolygon', function() {
+
+            it('must be a valid MultiPolygon object', function() {
+                var validMultiPolygon = {
+                    "type": "MultiPolygon",
+                    "coordinates": [
+                    [[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
+                    [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
+                     [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]
+                    ]
+                };
+                assert(GSV.isMultiPolygon(validMultiPolygon));
+            });
+
+            it('member type must be "MultiPolygon"', function() {
+
+                var invalidMultiPolygon = {
+                    "type": "multiPolygon",
+                    "coordinates": [
+                    [[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
+                    [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
+                     [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]
+                    ]
+                };
+
+                assert.equal(false, GSV.isMultiPolygon(invalidMultiPolygon));
+            });
+
+            it('must have a member with the name "coordinates"', function(){
+
+                var invalidMultiPolygon = {
+                    "type": "MultiPolygon",
+                    "coordinate": [
+                    [[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
+                    [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
+                     [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]
+                    ]
+                };
+
+                assert.equal(false, GSV.isMultiPolygon(invalidMultiPolygon));
+            });
+
+            describe("type coordinates", function(){
+                it('must be an array of Polygon coordinate arrays', function() {
+
+                    var invalidMultiPolygon = {
+                        "type": "MultiPolygon",
+                        "coordinates": [
+                        [[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
+                        [[[100.0, 0.0], [101.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
+                         [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]
+                        ]
+                    };
+
+                    assert.equal(false, GSV.isMultiPolygon(invalidMultiPolygon));
+                });
+            });
+        });
+
+        describe('Geometry Collection', function() {
+
+            it('must be a valid Geometry Collection Object', function() {
+                var validGeoCollection = {
+                    "type": "GeometryCollection",
+                    "geometries": [
+                        {
+                            "type": "Point",
+                            "coordinates": [100.0, 0.0]
+                        },
+                        {
+                            "type": "LineString",
+                            "coordinates": [ [101.0, 0.0], [102.0, 1.0] ]
+                        }
+                     ]
+                };
+                assert(GSV.isGeometryCollection(validGeoCollection));
+            });
+
+            it('member type must be "GeometryCollection"', function() {
+                var invalidGeoCollection = {
+                    "type": "geometryCollection",
+                    "geometries": [
+                        {
+                            "type": "Point",
+                            "coordinates": [100.0, 0.0]
+                        },
+                        {
+                            "type": "LineString",
+                            "coordinates": [ [101.0, 0.0], [102.0, 1.0] ]
+                        }
+                     ]
+                };
+                assert.equal(false, GSV.isGeometryCollection(invalidGeoCollection));
+            });
+
+            it('must have a member with the name "geometries"', function() {
+                var invalidGeoCollection = {
+                    "type": "GeometryCollection",
+                    "geometrie": [
+                        {
+                            "type": "Point",
+                            "coordinates": [100.0, 0.0]
+                        },
+                        {
+                            "type": "LineString",
+                            "coordinates": [ [101.0, 0.0], [102.0, 1.0] ]
+                        }
+                     ]
+                };
+                assert.equal(false, GSV.isGeometryCollection(invalidGeoCollection));
+            });
+
+            describe('geometries', function() {
+                it('must be an array of GeoJSON geometry object', function() {
+                    
+                    var invalidGeoCollection = {
+                        "type": "GeometryCollection",
+                        "geometries": [
+                            {
+                                "type": "Point",
+                                "coordinates": [100.0, 0.0]
+                            },
+                            {
+                                "type": "LineString",
+                                "coordinates": [ [101.0], [102.0, 1.0] ]
+                            }
+                         ]
+                    };
+
+                    assert.equal(false, GSV.isGeometryCollection(invalidGeoCollection));
+                });
+            });
+        });
+    });
+    
+    describe('Feature Objects', function() {
+
+
+        it('must be a valid Feature Object', function() {
+            var validFeature =  {
+                "type": "Feature",
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                        [102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]
+                    ]
+                },
+                "properties": {
+                    "prop0": "value0",
+                    "prop1": 0.0
+                }
+            };
+
+            assert(GSV.isFeature(validFeature));
+        });
+
+        it('member type must be "Feature"', function() {
+
+            var invalidFeature =  {
+                "type": "feature",
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                        [102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]
+                    ]
+                },
+                "properties": {
+                    "prop0": "value0",
+                    "prop1": 0.0
+                }
+            };
+            assert.equal(false, GSV.isFeature(invalidFeature));
+        });
+
+        it('must have a member with the name "geometry"', function() {
+            var invalidFeature =  {
+                "type": "Feature",
+                "geometr": {
+                    "type": "LineString",
+                    "coordinates": [
+                        [102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]
+                    ]
+                },
+                "properties": {
+                    "prop0": "value0",
+                    "prop1": 0.0
+                }
+            };
+            assert.equal(false, GSV.isFeature(invalidFeature));
+        });
+
+        describe('geometry member', function() {
+            it('must be a geometry object or a JSON null value', function() {
+                var invalidFeature =  {
+                    "type": "Feature",
+                    "geometr": {
+                        "type": "LineString",
+                        "coordinates": [
+                            [102.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]
+                        ]
+                    },
+                    "properties": {
+                        "prop0": "value0",
+                        "prop1": 0.0
+                    }
+                };
+                assert.equal(false, GSV.isFeature(invalidFeature))
+            });
+        });
+
+        it('must have a member "properties"', function() {
+            var invalidFeature =  {
+                "type": "Feature",
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                        [102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]
+                    ]
+                },
+                "propertie": {
+                    "prop0": "value0",
+                    "prop1": 0.0
+                }
+            };
+            assert.equal(false, GSV.isFeature(invalidFeature));
+        });
+    });
+
+    describe('Feature Collection Objects', function() {
+    
+        it('must be a valid Feature Collection Object', function() {
+            var validFeatureCollection = {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+                        "properties": {"prop0": "value0"}
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": [
+                                [102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]
+                            ]
+                        },
+                        "properties": {
+                            "prop0": "value0",
+                            "prop1": 0.0
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
+                                [100.0, 1.0], [100.0, 0.0] ]
+                            ]
+                        },
+                        "properties": {
+                            "prop0": "value0",
+                            "prop1": {"this": "that"}
+                        }
+                    }
+                ]
+            };
+            assert(GSV.isFeatureCollection(validFeatureCollection));
+        });
+
+        it('member type must be "FeatureCollection"', function() {
+           
+            var invalidFeatureCollection = {
+                "type": "featureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+                        "properties": {"prop0": "value0"}
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": [
+                                [102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]
+                            ]
+                        },
+                        "properties": {
+                            "prop0": "value0",
+                            "prop1": 0.0
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
+                                [100.0, 1.0], [100.0, 0.0] ]
+                            ]
+                        },
+                        "properties": {
+                            "prop0": "value0",
+                            "prop1": {"this": "that"}
+                        }
+                    }
+                ]
+            };
+            assert.equal(false, GSV.isFeatureCollection(invalidFeatureCollection));
+        });
+
+        it('must have a member with the name "features"', function() {
+            var invalidFeatureCollection = {
+                "type": "FeatureCollection",
+                "feature": [
+                    {
+                        "type": "Feature",
+                        "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+                        "properties": {"prop0": "value0"}
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": [
+                                [102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]
+                            ]
+                        },
+                        "properties": {
+                            "prop0": "value0",
+                            "prop1": 0.0
+                        }
+                    },
+                    {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
+                                [100.0, 1.0], [100.0, 0.0] ]
+                            ]
+                        },
+                        "properties": {
+                            "prop0": "value0",
+                            "prop1": {"this": "that"}
+                        }
+                    }
+                ]
+            };
+            assert.equal(false, GSV.isFeatureCollection(invalidFeatureCollection));
+        });
+
+        describe('member features', function() {
+            it('must have an array of feature objects', function() {
+                var invalidFeatureCollection = {
+                    "type": "FeatureCollection",
+                    "features": [
+                        {
+                            "type": "Feature",
+                            "geometry": {"type": "Point", "coordinates": [102.0, 0.5]},
+                            "properties": {"prop0": "value0"}
+                        },
+                        {
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "LineString",
+                                "coordinates": [
+                                    [102.0, 0.0], [103.0, 1.0], [ 0.0], [105.0, 1.0]
+                                ]
+                            },
+                            "properties": {
+                                "prop0": "value0",
+                                "prop1": 0.0
+                            }
+                        },
+                        {
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "Polygon",
+                                "coordinates": [
+                                    [ [100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
+                                    [100.0, 1.0], [100.0, 0.0] ]
+                                ]
+                            },
+                            "properties": {
+                                "prop0": "value0",
+                                "prop1": {"this": "that"}
+                            }
+                        }
+                    ]
+                };
+                assert.equal(false, GSV.isFeatureCollection(invalidFeatureCollection));
+            }); 
+        });
+   });
+});
+
+/*
+describe('Coordinate Reference System Objects', function() {
+    it('must be a member named "crs"', function() {
+        
+    });
+
+    describe('Named CRS', function() {
+        
+        it('member type must be "name"', function() {
+            
+        });
+
+        it('member properties must be an object containing a "name" member', function() {
+            
+        });
+
+        describe('member properties', function() {
+            
+            it('memeber "name" must be a string', function() {
+                
+            });
+        });
+    });
+
+    describe('Linked CRS', function() {
+
+        it('member type must be "link"', function() {
+            
+        });
+
+        it('member properties must be a Link objec', function() {
+            
+        });
+
+        describe('Link Objects', function() {
+            
+            it('member "href" must be a dereferenceable URI.', function() {
+                
+            });
+            
+            describe('member type', function() {
+
+                it('must be a string', function() {
+                    
+                });
+            });
+
+        });
+    });
+});
+*/
+
+describe('Bounding Boxes', function() {
+    
+    it('must be a member named "bbox"', function() {
+    
+    });
+
+    it('bbox member must be a 2*n array', function() {
+        
+    });
+});
+
+describe('Custom Checks', function(){
+    it("must only functions", function(){
+    
+    });
+
+    it('must check on the described element', function() {
+        GSV.define("Position", function(position){
+                errors = [];
+                if(position[0] < -180 || position[0] > 180){
+                    errors.push("the x must be between -180 and 180");
+                }
+                if(position[1] < -90 || position[1] > 90){
+                    errors.push("the y must be between -90 and 90");
+                }
+                return errors;
+        });
+
+        gj = {type: "Point", coordinates: [-200,3]};
+        assert.equal(false, GSV.isPoint(gj));
+
+    });
+});
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   Û=;¶µ^°≈Ëı≠è^ûFöMu’≈™PÎvç"„óÊµπ
+Ñ$πN=äΩå‹´ƒ(YÓ¿‚&>gnk◊%YdÎ6ÆS§›º“™âVΩ…	>ftiÿö’EùOh≠€πGäa¢UÿØ∏Ï∞Y2fvà»ƒx…LHèŸ3˝ªGÆ®"ÃÎN¥x˛Í›N"ËZ◊lR@€}’«xé"õ,µ¡dwoWÕc$ˆ2L@ﬁı®k´\ôúXîƒL∆”s∫mµßC:ùËxÉ¯÷!€ƒ¥√èﬂ]•dÈôWücÊ@Æ≈>˛å›ñ¯Î[∂›‰ÓpÎ˜oøTŸ_Z„38Ì?çŒ¸|∆b3zjÖ≈Èù9™Òˇ Y´\5≤aêØ©≠≈sáàB(¯‚∫óXh[‹‹∏xB† ¶»#»Û Ï><◊ó≥7i∏û$Ê)acl∂0ÂÍou)∑ˆVR£¢tÈ)Ò(ÍWç È;«ÒëÔé'∏y™‘µU>Ùw£MvÔ∑}ú<&6¶è“2˝Ω»Œwπä∞Tq£€È«iM:™˘˙u*ﬁ˛¢&´	ˆD1K¡P¨AÖ6˝¿J[<?Hˇ ádÓ 35î¿s≠”∆n˙ô]çöùuı(óÍHfdó
+ñπBî@I"¢ëﬂ¶ï¨Ê#\éÉ¯mŸÌNV±U°ıùÓˆó“ô1ûF-eëµ{DÍ:x§_Øì∂ÜåÆΩï≠≥¬BbøÀ◊nMé⁄e#ª(xJN”)P∑òÉ≈dp—,∂«s]¿Hp˜»r–∏AQ” ï"6#¬	ôÆq~^ˆc/ÿ˜€Ìûg∂Yû“Z•§¥∆yZC3õ©õt–‘¥Á%K;TËf3¥±Ù≥»Å*±¥»K88éµ•€]⁄<ıΩÎE$çâb$ç¸´ß±âaX≠ùùÊ|›≈≤Ç•HJí5ë
+	;DLyÛÕVYçÁosÔm∑¸Œ˝%>ïB…cOfLÆ&ïî¿B™Õ~`|d˘Äå¸b=ÌøP•/-IV‰}ÛWù∏Sòzsu%b>|∫TÎÆÒLΩÒ˚„˛™J≈ÉÖƒkÕî`4ô++:…ylL4 `R¡©qêQºƒm>‚zbL<îŒ≈j˘∆ı9@]ãÔkÿ2»»+b~e?Önkˇ ”ÒﬁÂ‚;ÅÚ„ÜW'aØt∆º∫E«wRË(-9ØPƒÔ≥d¥VfΩ–ëü˛GêG[¶W∏	y˚MFùC‚9˚øïpﬁ’pÌV∏~(⁄¥/B…2t.8Tî|◊Î]2kM¨^9?Xb™ö√◊ƒ5BmLÂBÃUÆ©iô †x∆ﬁ]‚&gn∂◊∆§∂«xé>? πÇ \|Éˇ ¿p}©è«≠\˘fÇJøâ.Ä©§h5õú©ÑqéÕB{H˙ ù„ÛLcx‚™
+f«Ï†ÙZ…±JÖ@:9Y†eï≠wìVœÙ¥.xØp]¶.OÏèE_|˚Ë©;±Øñımæ‰LôÚÙ™ø‹/öù¢Ì =9ÒOZQ’¯Mi™ª}Ç◊{ç4È‹Ì>Æ¶»∑[	¨ÛJ∂-'Ù˘d•…π'åUã®[M\πıâ∏∆¨≠q€Ä§≠iIè ’1>Cm’¿5¥·Ÿ3≈rÌ÷f√÷”ñÕ8¥ñ§áOw¥¬œäBà•$â‚ßÕ[N¬24quo™¨eÒ÷´∏’"Ì∫52Ωé∫óHÏ∫ußo∞@Ü&#î˚ êÚìΩkL®-{ª∑–A3	(u;˘p=*E”uéâfNª"¬Ò¬°s%dÎèPõa*Y^àÇÒÓr'¥LLœKP8≠'√˝y‘[ﬂoë}Ü¯–ßÁ˚≈‹~î»´hë•Äåˆµ PÆ?QGN%á~ùR∑¿ñ∆˝5sdƒrôÍÖ˛+áah+ΩπJU$n£HﬂÌ¨˛] ŸÉ4º¿Â∫÷®.+¿ IÛYLtµj{Y~∑Ω∑’∫U·æ9‚3⁄ªê.≈„3]Ú”ÃÖ\%´-b´g1öR•˜·3Œã_Ï»⁄ZÎî«*Óò-VÔ:≤ªs˙πÖ"‡\çæ Hü)˚+´·Ωà‚bMˇ hoZ{oÈ¢›DbBT•iP»lJÄ#RfkAˇ 1ıßpıÜ[B‰;çﬁÌ]›ù}Cëû‰ÿ÷∫ä’‹∫5>•ΩíÂ™Zv¡3£r ¥ß™
+!Z∫W„âzM›√◊è°€áñ„øÛPgxûîWvÀ66∏]Ö’Æ`≈≠§§éÌ)IuŸ:†T$ì‘ûïV;E⁄é¸â◊¯Æ÷ˆWBÍnÍ˜Q6>ìJÈ∫ﬂRJSDÚ⁄á/dìá“∏≤pO…dlV®Å˚à„héØ⁄X™Â‘¢›ùO®pˇ ⁄±¯∂hge€ÏEÙ¢›<§fc˘1π	T—÷∏˝˚iŸˇ áÌM™≥®◊(ÒdÁ{µ¨®ÁsÌŒNg´-∫g∑ÿXMa»ˇ €,≠™Æ,ïÄ+â‚ˇ &π('fºÀ~ÎÖ)·q˛⁄+'tÑù¥§@‡Ó|œ»pé÷_ƒsbÉ∂m˛®q* !’8§©¬TvRe1ıD( ∂Ÿkùß∫ÀRh˝óπ≠Î·M¯ªô´x—«FG!LÊæf˛6äùp´iÙ›âRNÀyúnE21÷öãï$î,ÍO ƒ}«ÒÆ⁄¨9›ÁR¿eıß_vU®§+ƒ	QÊ|∫|+µˇ “Oº6ªœ˙tvqzÇû†≠´ªUc%ÿìÚ¯‹üÉS´I_"–˙õ	îπ˛ü-äˇ ∑˘Sm ÊI¨¸KW'ÃDg™`^ıÑ€≠πGé|¶®äÚ7hsxvkæKJÀ…Ó§ïFïH∫îùií<ÕZi°sZ|µÌ•[j«ˆW±=ƒÔ^S*måqjæ¸Í*˝©–5Skîã≤X-É»⁄€‹,N
+8…ue¬\≈m⁄˙¨∞•ù∏SáBw¯N‹÷<€e<B ÔÆÓ⁄a'©mÑ˜Œœî≠HÃèJ∞◊AI≤‘DÒ%Ú~åA@÷i@8ôÕ¬©ù˝œ⁄^„Û’˙÷˘>µƒ?ÎWh≠˛£Ÿ)`0hË˛◊`Ç‹"pZ+]®íüÓë7rﬁ=l]s<mÊ7â6>°B~ƒ&k”˘–1ëÚ’ƒÓÚ^?˛eë˜’gπü«Ûˇ ˚GÊz∆÷”Y ëÙá]¥‡ﬁ6˙˜ñÚ[W Øa22Ød¢"b`ß® U¨(¢* \∑SóôRúôJÅÄìÍ:’á«dá)ÒbﬁúÑ]¶ªÅw ◊œ'2µL∏ÚH{!*™ã+›p<Ä‰äJ"G›‹CwhIùEI€–à;ˇ SYÀk^˚}`jmvÎLäBÇæÌ¢õˇ ;Îñ¯…Ú≥Ωˇ ¬Ú"Ìæ≤«e3‘∆1ò–˘X<æ¡∂`¬VWG‰Ó.6ôëgècg¨ÆUev≈ ‘ÖOÀÇ>cj–qÏ5ºcæ±v!ƒlL 7JåÉ≤.:îÄkøcO?gQˆﬁûÜ≈aujÚqØ#©_©±…œU√⁄zsök%Fú=ó5
+ÌÈ˚l.NÂ8(ç∑ûä¯}◊mlêlIJäßxô:Ì^l∞8s∏¢Òï∑çm•∞ÇP©ΩDOävË"6©rù$“]ìGïn+,ò‰—ê]ê˝òâ·6<ëCæÛÓ^Û¨ÿàÛ≠dˇ ‰FøVBñ^t∆ã∆>1£E∑k^‘iMäjj_5◊Ve·e®VÕ≤;Ã@«¯Î¨V Øwn ﬂs¸´¢ú≥ÜVÑ]‹.W1Ç$s<¿Ë+]_2{¢¨}ª)ﬂ≠K¶ÙMçFk?åΩÎ«X ‰ÀKYÌ◊v°¢Ò’ŸΩinq◊m◊•j6öŸ°≤C∆&5¨nÈ≈ﬁŸ^whRt‹N˙J»$Ò±:}@5“2Nn÷ä`»∫yªÜﬂE’ªêùiu`Ñè
+«xÑkI˙äTS>ØÍÔﬂ?è¿ΩûÌ∂;ÂVÅÌiõ—¸ŒW‘∫C∏ôå•Â
+}¿ W≠sMÍ\’6°RsÜÑù sM“DsÆmø∂H∂ZQrÑ™µï52cÆ‹Nıêƒ˚"¿±ß(’”ò]Â¬ã∂l°÷“È¨∂íR§°JÉ§(âQ $.MI˙Ωw£ÂÓà’ÿüåzrÔ∆¸˛Å≈ˇ ‘Ω¬»$Ò:ÁU€Ì›â≠FŒkIeÔà/Õ;l·w˛ùr)?ÍîKÃukÃXõˆ≈6±RA.)0£ßçßàÛ÷+-ˆuñp¨Ef9|⁄‹Jm¿ZG{πÇN¢bTbF‡Ç	“∆∏Ó=K¨z¶ÂÂ‹{c7®Ïer7ıKÁRü’ˇ X»gÚÁg-™37l*∑
+$øF«æÇu:•øﬁV∆w&yôﬁΩbœπ≥ÓIJ	
+:R “ò@	àÍj%N®’5u&5ï∞µ.Áµ"c˙vñ±Öß®Èf1:ô∆°ƒ€¿:˝QwÒ∞d£‚pa0$.	Ò+îç£◊ áB–Cå™Yò)ŒægNÛ¿´€⁄ÇÏ°”Àw⁄Î¥ÊÖµ¢Ømq9{∫+å˝e‹E˝Ub∂Q˙^âÜ·Ù’éÌä—ÓHgmÚÃaéØˆ∑∑?GÖ‰btœü5•b9 ÷≈•Z‡È˜áà 8Ω–ô;ÖAtıÇBky~IÈç∫m]´¯ÈÒÎ≤=∏“ŸWï¨S[‰2∫˚%Yd•Z◊:¢˙ÀPj,ﬂ1ºÚ¨àâÒ)qÍ6€,iõ&≈≠ùãadçı(ÍıRàí|∫|+äcπYÏyÁ1|o0^;qπ”°î•∞y–ÿÑ§u05π&ßçWÛ˜QP∆eC∫=©Ìﬁ#∑ˆq”Ø3y¸∆¨=;å”ÏÆÀ∑-!^f¨’Û Üf~§’#;ƒ_wt$"Ê…•|Zc»Ì◊˘÷€#⁄óÓå∫ÂÚ©	¥íG
+˝§◊ }Õª_VjnÍ∑Oi˝6ZaŸ¸˙tÕ~÷SßÉ¡Ÿ–¯lì-´/Q.Òf≤9&Å®-=ﬁu_.· »Án8Ñ‹jd!ívÇG w¯W§l≠Æ¥@ªÔÓnﬁ‰ò'}ı¥•Sº¬¢@ÆßIˇ ô⁄ìV~úó—™∞x‘˛*v∑˛–Ë∆”∑ôNgUÁÒ⁄ó%:k®&X8º^üù7ô@1ï`,@ñ˚˘
+zã\Øπm%ªdB9ïx=5Á,ÁîlÌ≥èª‹πﬁbÍV…Ñ%)Ò®u*í€}™p´ÚÛ-¢˚áÆ5æEË‹é3∫˙¥:≠ôég;ı8ºFù¡Ê4éOßÈ—ü≠ˇ ßp⁄¬•ö˛+C6>°¢E∫»JgN*Z∏q˛‰›BLÒ¶A∞v™  Èπ∞∂√’t‚^¥y‰•"BäVí©·JIc÷kˆkÁÕÙ§Û¥^ó∂UÈ1O_)ó∑.2)8¿9r∆¨ÀÑDD@ñÒÎÛ–Êbm)%-§Ô∂‰ì˘T,d8∞á/ô; ı‰W-ø©^¨Á˜˜-›˚8ˇ ËπÌo™5:u
+ªö¸v"Œ6¶8˙¯Êº|ÁY¥+åœ9íøƒı¢\]‹WπRt∏µIOñ¿ˆ
+ÔÿUò¬Ú∂^¬WyilŸJ‡®*Tdz*F’ØjÑ∏ì g◊¢(˜ıÎy˜=(â1"E~Ü∞Tà;.#Äı@¨ÿ3ü¿Ç“/¯àÈ	eP(L≠AK<π˚™|–öSWbó®t~ß¿ø[_i‹~°¬„≤NZ≤è~$∏´îN.≥Ÿn"Õ;nÄ[ÑeúwÅıøX´’6;µ∂u-=Mmx≠©Œ˝Ω~ f$!B9Ç:˘äâ*hçSñ‘V4^MÊuFj,Mu„∞∏ˆ›&’fó∏‚"•J≠TLIπãSÔ¨É/%∆€p,I‰yVªyl´;ÀãSæÖH€îù“~cÔÆ∞~|≠Óœg>/váµ]‚–ZZÊ¥Ì~ù≥¢q˜U¨ú¸∂KG”æÔ˙0Û∂qˇ Qçûb1¨Æt¬i&7Ç"à‹lq˜mÌnªp≤–ÄuDßë∑ê„mœ5ƒ1Ããoà‚˜ó÷ón$:≠JHN°´Ö+Qâ◊Gh
+*Çy6@?Q-Yê≥QX◊h?©K~òê’zö`ˇ ‘(’Çï'$¢)Çâ)ë⁄vü}Ns3äÄ›í
+¶>íø*®;4a†Wuäæ4°|ö±≠Ïæ¢≥B´ó¢®\î/cajärs∫Df@V†•i„`}˚ó¯ﬂ>ªPSΩ[¸˛⁄”Z≈“ùD_-(h˚∫ÛUÛ_|e‘ö“é[òÏ6'3Ä‘uáŒNB÷OPTÀ—x--Øê«—ö‰†.PI(ÒA	lQã∫¬‘R}‘ìı§Ò«±YfF-4´ı⁄∆û%  ~{–é¢¥5Û'∑ù∆˝?nin‹i=W≠⁄˛È”‘Y_eªçÄ≥ïÕ‡q8ÁŒ+1î–˙ó'é„ï—mÄUZw’≠·(jœœ:N7aqá6á [Zv¯ˇ _w≠v¸ççZfNı˚´1sz¡ê¶Ã®$x∑H3§L;ÄïiÑçyiéıÎ≠3‹¨v{LRÁcY˝F-§x∏™≠oç‘∏´:^Õ≈`†b√Ò˜â¨˚'âLDŒÿ{mA*Pr|y€÷∑¨Y¶;ñB€›KJ”ıà ÖïÛ êx5f{I˙ÎÕ^’rl‹∆È<Z™‡t•–Õjú¿Å)cç•ß¶h2g˜Hf’ÖÒÿB'rÍ[{Öπ¨•ILy?ó·X‹k5·ñˆ¡¶V\^ÆVJ[LnGö∑ÿùl”µˇ 1˝Æ¢É—:∑¯+ˆ`cQÎ†j›Ky–©˙xú≠Á/*ä5b#jÀ˙qí‹&"zŒ€a
+i3‹6Ã™	ÙÅ”‘◊;ƒ≥ä1Íø∏^†|ÇîÒ´–í`T‘zcX™ª+]ø£-1c ‡C4}‰íf0´U&÷N,XX√Úø&¬Q f'{JaÙ#î1#ÌÁz√&Û.£∏b‰†¿Q‰6è]∑™Ÿﬂ\è»⁄x‹\|}’=Ω¡‹√Ú9ãòÀÙ¥ﬁπ≥fòŸè§∆ÂÔbµÜ»iè•ëO”Z´ZÚÌG%<¿‰FõÔ\≤îãW–ïç…Ô–˘Å”÷≥ÿ]æ˙‘¨RŸÁ≠ÇV|àê Ö!Fb àä÷üw˚±ÛÔºx+Z[_hŒÊ?Kﬁ•â≈‰¥⁄Ò4”ÉŒ;ñfwõœV•C3ô•îûkq«”µc`a1å~ÓÓÁRØ/ñZë;Gl6'„[neÅX+Ω¡∞{vÓBï
+Ô“íDQQ0	˙=MVácªÂÜ~=ı¥VΩ ø˙U`õLf]qãÇ”≤◊ÕGX:	(ÁÙ¬U∏≥aíà.òómàíŸ”?XnbØ~Cêªƒì‡piâù&¬∑ô˙l˜Eˆó≤?äùÃ+˙œ{Ïjå≠Ìsö“ZêÙVãÓ≠Î4è@V÷Y¿†ö∏›†≈¶ù€•0Ñ=€ô@N„ú¡Ò[Pó∞ÁOv^üÅ	
+€LûâË|ßm´úÁ<∑â9qiô¨VõÖ⁄íÀkBî∂º]‡i=V&S<«ù?{ãﬁQ¶ÛÿÕ+ﬁåö°x›!9∏«j/§;™4ûHï_)®ª›ÌÜ÷⁄7#à Eå¶ÍÔ–øJWÁÆá˝€õÀ‰≠ñ/0rXA:JÅıí¥ÍI»Ãé@ß·¯z√∑ò>l@π{IR[JHéÎ.‹?TÖ%S
+#jéi¸∂Ïqã¢÷ÑÓŒM£T•8/ßr
+±4âÛvßnS7◊ dÖzâÂ¥Ô¥±ï’∑'‘>*”ø¿
+∫ˆT«Q•„vHIT©¬ì=BKÑ	¯ÔZõ˘;¨Î˜KWw&ˆ
+øn·Œ¨”.òÿŒÆéCÌ–õÒòî›ñå¢Y$òÅ	ü∫u˜iï“ì≠-≠[j‰pw‚∫K3øŸ|=Ñ-.ﬁ€7†ïÑì®§£«Iö©ò¨ΩúQäCF ^©ë°[#EÒ##>DXYA¥Ñ¢Á´Ø€!Ì$»P‡ÇEa≠1Ì‚∂UıL˘˘˝ÙÎ Î€vËb’Ö¬„¥ï‹u&—}¨QZ.ÆLX∑ "–8àîîl1Ô®g∫íÛ∫ë3æÊ≤™«√M/‹≠C/π1“ç¯ßæíåñ'ROrÌR∆'9éØ5rnæ€9)øfVÂP≤f∆yÒé¨rQ+ZŸ∂Û’áÅi·‚u~ú∞≤ZÆºS∫—p– 1'àÿéûµªü”√‚™ª”ÿ<áyÛŸVW¬gªë´t›:∏⁄Gy“ZH±îÓ"≥◊!7Ì›á∞<d#m˙⁄ÚÓ\F!hopß∆@éﬂÌÆG⁄7h©Ò‘`ˆç•Kn‹¥®ï'»G3#•_=Ñ¬‡”q_÷3"åt0+]ÀË´âA
+ÜZhº÷ïilH»DD∏v€iÿñe*”;Çd¸kú≥önnîï:Ü–W—.Ï'ÃE5«∑Wg/Uπ[zí≠∫“¢˙\&Ä|¶Õw»: ÆŸrƒ˙¢Q˚ú îÃL«æ™*¡it˜∫·0@J?“Øú]	eJmñTô˙K{Â≤GÙkgª]s •πø4ªå∞ëﬂ˝.∏ÏÂ4™µsÙìÄ'/Ü–|dÉ}„ﬂ[gπ8L´{W°HÆZ1õvÙÈ ÷zÅ‹êÈëÂπ•lÌFD•û/ô› ∏Ü"¿ïKù”Ì3/2I∞˜„\˝Ö30%ç˙rlúNˇ ≠>Ñ§èèù;ıÂ∂ﬂ•îÃŒó?ë1PüzOØè$¥⁄4Á|æBÎ›kØÜ_î±›.‘–‘:;85F£≤∫g7Vïó¢n‘\&≈r	≠eb>@" 1«›‡˜…”{|Î©ôÒ˚∂¨∆ü±Lˇ y¡0õkgÖhç{»’
+#° ÏH¶of?J/ÄΩÜ…;Ph}E®2∫Æ⁄Jù≠M´;—†Û9Ä¢√ÂaT,Ö
+™¬*Ÿìäê!Õâÿô#uæX¬ÌúKâZ ∏Ç§«Ú¸f≠bùßÊºY∞’¿e-Lêî9œûÎ?f√”z∂(¯ÌÒ˛"yLUÊ-Ü]o|(Vu∫·>Î5ä‘U|UÖcÔàƒﬁˇ úô√Ï‘“ÅœèsÒ5¨≈åLL«tò“gä{„G≈Ê6´r8=0æ>#é*·xÒyçf ±	Q%»∆Jf":a¬p’∆ªpØ/¸Íaõ3
+îã’F„ªDz˝Z/_‚∑√assBv¶ƒîã…◊{Öe∞@à„ˇ Ø<r›ÊfD``ÁÛ1øI˙ü	 ìhè‚?ù9Y√4®˙Õ¿í?Ú“Û¯ŸíaoWn;n ûw5Ä@9…D¬Ø7aõ7ôÂîÔ zÖÉ"Õπ˛Ωiü⁄Ã—¥b˜yÿ$‰Øñæ-¸Ω €]£ÏUª&JÄí’Ö'!È22Æ‚©’÷âùÁ∂=Œ€tä¡pÖà^Ÿ˘”õŒµ≠ëç\ÅOﬂ·Ø≠¯ì\°Cc¥˝àﬁ°™wƒ˘ ˜Åñw]
+8/^˛›˜è}¡ÃMä6ıˇ Zì˚múRåiÒËëˇ ñ∞ü√/ÇvÄQ®ÏuKO\≤„´wó*õQQ†[„Ïà˜$ñê∂E2—‚C#¥OÁ¶%Dÿ£Qˇ ò˛tÙÁå‚òsH‚[AèÑ£cÎY∞~iZñ)ËL∆O∂+a±∂ÎvªÊWr4ïK%0Fefû#∏£éhÑO°LL˛wùß°åµ6©q§y%’Åˆj•;ÊKÂ!ÃC›núOÎ6;zî˜◊ü¸D¯ÍíÆ⁄ü&æH„+uF#Áˆ´∞îW2Úï?È9+yXƒÃƒôD˙ﬁ}ÃHpv%*Eı“HÚx˛3Bsé&A‡x;ìÁ`ézî7Î?“èÙÒÓFºÀw∫⁄ÛΩù∆÷π‹f+í‘ãÂ•a…æéû®™x?=¨~2ùõ%èBD$Õ∆"'oÁ™Oel"ÈŒÚÈ«úwÕN	¯~ü±Ìc8a6…¥¡ÿ±µ`∑:G$î§¨•*$íHO]Ö2Úü¢ÁÈuó.Y–c)}”a§ﬂñYÖâY9u°E|˙´§ûqÃ‚y0ÊcÛ¥Lú∑Ñ%)@mz˛!˛uI]•g∫Î ∫h©jì˚Å>É†Ù}içsÙW˝(F*Ë=A\˜Å/¢˘y0C1øóïÃÖ®iﬁ¬ bf?«O˛Œ·GtØ˛Á˝Í3⁄.n'{îÉQaÛß¶å˝+L>ﬁB+„˚Gßµù`sä˝◊˘_‚™∂ffi„„YaqµÂÚ#ŒMGò€nò2Œ/*»-»˙ $}Ä§O€Sˇ ÈK¥[{ùæ:∂≠∑˙$+~ö÷†<Ä1=*⁄‡ÙÔe{qÅFéÌû/∂=æ—ò¡∑˝;HhLæà¿ÈjspÖŸ+)ƒ“À"¨‰2mà'?b≤“ì9òÎ2À,€∂ñm€B$@‡+IºΩƒ1+•ﬁ‚7/?x£∫◊*Qﬁyè_(ﬁöyL¶ôß/}x“Ì‚-Å6Í˝Œ1∏ŒÛï∞’Ûl…H2wÃu$âﬁ>—R6p˚ à;†êÊu.ú∂:ñÈèÌCËkUêJ°¿.i·C8ëôç˘@»qè˛ô€™n∫îóçÃtÉ>ëYãf°î9x@+ zAçæ⁄ˇŸ

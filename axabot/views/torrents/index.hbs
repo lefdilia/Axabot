@@ -1,0 +1,415 @@
+<div class="row">
+    <div class="col-lg-12">
+        <div class="ibox">
+            <div class="ibox-title">
+                <h5><i class="fa fa-magnet"></i> Torrents <small></small></h5>
+                <div class="MMtcenter">
+                    <i class="fa fa-circle text-warning"></i> Parsed Data &nbsp;&nbsp;
+                    <i class="fa fa-circle text-danger"></i> Private Tracker &nbsp;&nbsp;
+                    <i class="fa fa-circle text-navyx"></i> Posted
+                </div>
+                <div class="ibox-tools">
+                    <br>
+                    <span class="pull-left">
+                        <button class="btn btn-white btn-sm addfeed" data-toggle="modal" data-target="#addfeed"
+                            type="button"><i class="text-warning fa fa-rss"></i>&nbsp;
+                            <span class="bold">Add new Feed </span></button>
+                    </span>
+                    &nbsp;<button id="sendall" class="btn btn-primary btn-sm" type="button"><i
+                            class="fa fa-download"></i>&nbsp;<span class="bold">Download (<span
+                                class="countcheck">0</span>)</span></button>
+                    &nbsp;<button id="trashall" class="btn btn-danger btn-sm" type="button"><i
+                            class="fa fa-trash"></i>&nbsp;<span class="bold"> (<span
+                                class="countcheck">0</span>)</span></button>
+                </div>
+            </div>
+            <div class="ibox-content">
+                {{#if this.torrents.length}}
+                    <div class="col-md-5 col-md-offset-4">
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <input type="text" placeholder="Search torrent..." class="grabox form-control"
+                                        name="listerpm" id="listerpm">
+                                    <div class="input-group-btn bs-dropdown-to-select-group">
+                                        <button id="vvsearch" type="button"
+                                            class="btn btn-default dropdown-toggle as-is bs-dropdown-to-select"
+                                            data-toggle="dropdown" style="border-radius: 0px;">
+                                            <span data-bind="bs-drp-sel-label"> All Feeds </span>
+                                            <input type="hidden" name="selected_value" data-bind="bs-drp-sel-value"
+                                                value="">
+                                            &nbsp;<span class="caret"></span>
+                                            <span class="sr-only">Toggle Dropdown</span>
+                                        </button>
+                                        <ul class="dropdown-menu" id="mselect" role="menu" style="">
+                                            <li data-value="all"><a href="#">All Feeds</a></li>
+                                            {{#each this.types}}
+                                                <li data-value="{{lwrcs this}}"><a href="#">{{ucwrd this}}</a></li>
+                                            {{/each}}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <span id="loadmespn" style="display:none;">
+                                <div class="sk-spinner sk-spinner-wave">
+                                    <div class="sk-rect1"></div>
+                                    <div class="sk-rect2"></div>
+                                    <div class="sk-rect3"></div>
+                                    <div class="sk-rect4"></div>
+                                    <div class="sk-rect5"></div>
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+                    <br>
+                    <table id="mttblsrc" class="table table-bordred table-striped table-hover smalltbl"
+                        style="display: none;">
+                        <thead>
+                            <th colspan="2">
+                                <div class="checkbox checkbox-primary">
+                                    <input id="checkall" type="checkbox">
+                                    <label></label>
+                                </div>
+                            </th>
+                            <th colspan="3">
+                                <center>
+                                    <h4 id="srchkey"></h4>
+                                </center>
+                            </th>
+                        </thead>
+                        <tbody> </tbody>
+                    </table>
+                    <span align="center" id="loadselistmfik"></span>
+                    <div align="center" id="olaselistmfik">
+                        <table id="mttbl" class="table table-bordred table-striped table-hover smalltbl">
+                            <thead>
+                                <tr>
+                                    <th colspan="2">
+                                        <div class="checkbox checkbox-primary">
+                                            <input id="checkall" type="checkbox">
+                                            <label></label>
+                                        </div>
+                                    </th>
+                                    <th>Release</th>
+                                    <th></th>
+                                    <th colspan="2" class="fnorm">
+                                        <span class="pull-right">
+                                            <b>{{{ this.cfeed}}}</b> Feeds - <b>{{this.pagin.count}}</b> Torrents
+                                        </span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each this.torrents}}
+                                    <tr id="tr_{{this._id}}" data-hash="{{this.hash}}">
+                                        <td class="checkmlk" width="1%">
+                                            <div class="checkbox checkbox-primary">
+                                                <input name="tcheck" class="tcheck" data-posted="{{{ispostedBool}}}"
+                                                    data-topic="{{{autoDataBool}}}" data-tid="{{this._id}}"
+                                                    type="checkbox">
+                                                <label></label>
+                                            </div>
+                                        </td>
+                                        <td class="checkmlk" width="1%">
+                                            <span class="autodata">{{{autoData}}}</span>
+                                            {{{TorrentStatus}}}
+                                            <span class="isposted">{{{isposted}}}</span>
+                                        </td>
+                                        <td class="checkmlk" width="55%">
+                                            <span class="pull-right">{{{editTopic}}}</span>
+                                            <span class="creelead text-primary">
+                                                {{truncate this.title 70}}
+                                            </span>
+                                            <small class="pull-right noselect">
+                                                {{bytesToSize this.size}}
+                                            </small>
+                                            <br>
+                                            <br>
+                                            <b>Hash : </b>
+                                            <span class="text-default">{{this.hash}}</span>
+                                            <span class="pull-right">
+                                                <a class="text-danger" href="{{this.magnet}}">
+                                                    <span class="fa fa-magnet"></span>
+                                                </a>
+                                            </span>
+                                        </td>
+                                        <td class="checkmlk" width="20%">
+                                            <b>Feed Name : </b>
+                                            <span style="font-size:13px;"
+                                                class="text-default">{{ this.info.source }}</span>
+                                            &nbsp;
+                                            <br>
+                                            <b>Type : </b>
+                                            {{{fixTypeIcon}}}
+                                            <span style="font-size:13px;"
+                                                class="text-default">{{ ucwrd this.info.type }}</span>
+                                            <br> <b>Saved : </b>
+                                            <span style="font-size:12px;" class="text-default">{{{fixDate}}}</span>
+                                        </td>
+                                        <td width="15%">
+                                            <div class="pull-right">
+                                                <p>
+                                                    <a id="{{this._id}}" data-type="{{this.info.type }}"
+                                                        data-title="{{this.title}}" data-toggle="modal"
+                                                        data-target="#addtasktr" data-topic="{{{DataTopic}}}"
+                                                        data-tpid="{{{DataTpid}}}"
+                                                        data-profile="{{{this.extra.upload_profile}}}"
+                                                        class="addtasktr label label-success">
+                                                        <i class="fa fa-plus"></i> Manage</a>&nbsp;
+                                                    <a class="sendthis label label-primary"><span
+                                                            class="fa fa-download"></span></a>
+                                                </p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                    <hr>
+                    {{#ifCond this.pagin.nmpages '>' '1' }}
+                        <div align="center">
+                            {{{ pagination 'torrents' }}}
+                        </div>
+                    {{/ifCond}}
+                {{else}}
+                    <tr style="background-color: #fff; border-top: 0px;">
+                        <td>
+                            <center>
+                                <h5><i class="fa fa-magnet"></i> No Torrent found</h5>
+                            </center>
+                        </td>
+                    </tr>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+</div>
+{{> modals/addtask }}
+<div class="modal" id="addfeed" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content animated fadeIn">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title"><i class="fa fa-feed modal-icon"></i> Add new torrent Feed</h4>
+                <small></small>
+            </div>
+            <div class="modal-body">
+                <div class="tabs-container">
+                    <ul class="nav nav-tabs" style="border-bottom: 0px;" id="tabs">
+                        <li id="fr_lisfeed" class="active"><a data-toggle="tab" href="#lisfeed"> <i
+                                    class="fa fa-feed"></i>
+                                List Feeds</a></li>
+                        <li id="fr_newfeed"><a data-toggle="tab" href="#newfeed"><i class="fa fa-plus"></i>
+                                Add New Feed</a></li>
+                    </ul>
+                    <p>&nbsp;</p>
+                    <div class="tab-content">
+                        <div id="lisfeed" class="tab-pane active">
+                            <p>
+                                {{#if this.feeds}}
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th colspan="2">Feed Name</th>
+                                                <th class="text-center">Auto-Download</th>
+                                                <th class="text-center">Auto-Data</th>
+                                                <th class="text-center">Auto-Ping</th>
+                                                <th class="text-center">Type</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {{#each this.feeds}}
+                                                <tr id="{{this._id}}">
+                                                    <td style="2%">{{{statusFeed}}}</td>
+                                                    <td>{{this.name}}</td>
+                                                    <td><a target="_blank" href="{{this.link}}"><i
+                                                                class="fa fa-external-link"></i></a></td>
+                                                    <td class="text-center">{{{statusFeedOptions
+                                                this.extra.feed_auto_download}}}</td>
+                                                    <td class="text-center">
+                                                        {{{statusFeedOptions this.extra.feed_auto_data}}}</td>
+                                                    <td class="text-center">
+                                                        {{{statusFeedOptions this.extra.feed_auto_ping}}}</td>
+                                                    <td class="text-center"><span class="label label-success">{{ucwrd
+                                                    this.type}}</span></td>
+                                                    <td class="text-right">
+                                                        &nbsp;<a class="pingfeed btn btn-primary btn-xs"
+                                                            type="button"><i class="fa fa-bolt"></i> Ping</a>
+                                                        &nbsp;<a class="editfeed btn btn-default btn-xs"
+                                                            type="button"><i class="fa fa-pencil"></i></a>
+                                                        &nbsp;<a class="trashfeed btn btn-danger btn-xs"
+                                                            type="button"><i class="fa fa-trash"></i></a>
+                                                    </td>
+                                                </tr>
+                                            {{/each}}
+                                        </tbody>
+                                    </table>
+                                {{else}}
+                                    <center><b><i class="fa fa-info-circle"></i> No feeds on DB.</b></center>
+                                {{/if}}
+                            </p>
+                            <div class="hr-line-dashed"></div>
+                        </div>
+                        <div id="newfeed" class="tab-pane">
+                            <fieldset style="display:block">
+                                <form id="feed_form" class="form-horizontal" method="POST">
+                                    <div class="form-group"><label class="col-sm-2 control-label">Enable Feed</label>
+                                        <div class="col-sm-10">
+                                            <input type="checkbox" checked="checked" name="feed_status"
+                                                class="js-switch" />
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group"><label class="col-sm-2 control-label">Feed Name</label>
+                                        <div class="col-sm-10">
+                                            <input type="text" name="feedname" class="form-control">
+                                            <span class="help-block m-b-none"><b class="text-danger">*</b> The feed Name
+                                                must be <b>Unique</b>
+                                                Duplicate names are not allowed.</span>
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group"><label class="col-sm-2 control-label">Type</label>
+                                        <div class="col-sm-6">
+                                            <select name="feedtype" class="form-control">
+                                                {{#each this.types}}
+                                                    <option value="{{lwrcs this}}">{{ucwrd this}}</option>
+                                                {{/each}}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group"><label class="col-sm-2 control-label">Feed URL</label>
+                                        <div class="col-sm-10">
+                                            <input type="text" placeholder="http://" name="feedurl"
+                                                class="form-control">
+                                            <span class="help-block m-b-none">* The feed type must be a <b>Direct
+                                                    Download</b>,
+                                                Web
+                                                URL not allowed.</span>
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group"><label class="col-sm-2 control-label">Exclude</label>
+                                        <div class="col-sm-10">
+                                            <input class="tagsinput form-control" name="feed_exclude" type="text"
+                                                placeholder="720p" />
+                                            <span class="help-block m-b-none">* Skip all torrents that contains one or
+                                                many
+                                                of
+                                                those words.</span>
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group"><label class="col-sm-2 control-label">Include </label>
+                                        <div class="col-sm-10">
+                                            <input class="tagsinput form-control" name="feed_include" type="text"
+                                                placeholder="1080p" />
+                                            <span class="help-block m-b-none">* Download all torrents that contains one
+                                                or
+                                                many of
+                                                those words.</span>
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group"><label class="col-sm-2 control-label">Clean Torrent title
+                                        </label>
+                                        <div class="col-sm-10">
+                                            <input class="tagsinput2 form-control"
+                                                value="[EZTV],[ettv],[[color=green],UNRAR,[/color]]"
+                                                name="feed_words_remove" type="text" />
+                                            <span class="help-block m-b-none">* list of Words/Characters to be removed
+                                                from
+                                                Torrent
+                                                Title.</span>
+                                            <br>
+                                            <label>
+                                                <div class="checkbox checkbox-primary">
+                                                    <input type="checkbox" name="feed_clear_chars">
+                                                    <label>Remove Special Characters</label>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group">
+                                        <label class="col-lg-2 control-label">Auto-Download</label>
+                                        <div class="col-lg-10">
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" name="feed_auto_download">
+                                                <label></label>
+                                            </div>
+                                            <span class="help-block m-b-none">* If checked, Torrent will be downloaded
+                                                automatically.</span>
+                                        </div>
+                                    </div>
+                                    <div id="upload_profile_div" class="form-group" style="display: block;">
+                                        <label class="col-lg-2 control-label"></label>
+                                        <div class="col-lg-6">
+                                            <select name="upload_profile" class="form-control" disabled="disabled">
+                                                <option selected="selected" disabled="disabled">--Choose a Profile--
+                                                </option>
+                                                {{#each profiles}}
+                                                    <option value="{{this._id}}">{{this.name}}</option>
+                                                {{/each}}
+                                            </select>
+                                            <span class="help-block m-b-none">* Choose default upload profile for
+                                                torrents
+                                                parsed
+                                                from this feed.</span>
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group">
+                                        <label class="col-lg-2 control-label">Auto-Data</label>
+                                        <div class="col-lg-10">
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" name="feed_auto_data">
+                                                <label></label>
+                                            </div>
+                                            <span class="help-block m-b-none">* If checked, Torrent data will be grabed
+                                                automatically from external source like IMDB, tmdb...</span>
+                                            <span class="help-block m-b-none">* Auto-Data Only available for
+                                                <b>Movies</b>
+                                                And <b>TV</b></span>
+                                        </div>
+                                    </div>
+                                    <div class="hr-line-dashed"></div>
+                                    <div class="form-group">
+                                        <label class="col-lg-2 control-label">Auto-Ping</label>
+                                        <div class="col-lg-10">
+                                            <div class="checkbox checkbox-primary">
+                                                <input type="checkbox" name="feed_auto_ping">
+                                                <label></label>
+                                            </div>
+                                            <span class="help-block m-b-none">* If checked, Feed will be parsed
+                                                automatically in accordance to the ping interval.</span>
+                                        </div>
+                                    </div>
+                                    <br>
+                                    <div class="form-group">
+                                        <label class="col-lg-2 control-label">Ping interval</label>
+                                        <div class="col-sm-2">
+                                            <input class="nmspin4" name="ping_interval" type="text" value="5">
+                                        </div>
+                                        <i class="Mutedinfo">* The Minimum interval ping of feed is 5
+                                            (<b>Measured in <u>Minutes</u></b>)</i>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-white" data-dismiss="modal">Close</button>
+                                        <button type="button" id="saveform" class="btn btn-primary">Save
+                                            changes</button>
+                                    </div>
+                                </form>
+                            </fieldset>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,75 @@
+network.scgi.open_local = /home/rtorrent/scgi.socket
+schedule2 = chmod,0,0,"execute=chmod,777,/home/rtorrent/scgi.socket"
+system.umask.set = 0000
+encoding.add = UTF-8
+
+network.port_range.set = 45000-45000
+network.port_random.set = no
+
+pieces.hash.on_completion.set = no
+session.path.set = /home/rtorrent/.session
+protocol.encryption.set = allow_incoming, try_outgoing, enable_retry
+trackers.use_udp.set = 1
+protocol.pex.set = 1
+
+dht.mode.set = auto
+dht.port.set = 62882
+# Adding public DHT servers for easy bootstrapping
+#schedule2 = dht_node_1, 5, 0, "dht.add_node=router.utorrent.com:6881"
+#schedule2 = dht_node_2, 5, 0, "dht.add_node=dht.transmissionbt.com:6881"
+#schedule2 = dht_node_3, 5, 0, "dht.add_node=router.bitcomet.com:6881"
+#schedule2 = dht_node_4, 5, 0, "dht.add_node=dht.aelitis.com:6881"
+# Maximum number of simultaneous downloads and uploads slots per torrent (`max_uploads`) Default: `50` for both
+throttle.max_downloads.set = 15
+throttle.max_uploads.set = 15
+# Maximum number of simultaneous downloads and uploads slots (global slots!) (max_downloads_global, max_uploads_global)
+throttle.max_downloads.global.set = 300
+throttle.max_uploads.global.set   = 300
+
+execute2 = {sh,-c,/usr/bin/php /var/www/rutorrent/php/initplugins.php rtuser &}
+
+# Close torrents when diskspace is low. 
+#-- I'm not sure it's useful for you at all: it will check for free space in every 1 minute, but this interval should depend on the average download speed
+#schedule2 = low_diskspace,5,60,close_low_diskspace=100M
+schedule2 = low_diskspace,5,60,close_low_diskspace=900M
+
+# Stop at ratio 
+ratio.enable=
+ratio.min.set=100
+ratio.max.set=300
+
+#Incomplete torrent folder
+directory.default.set = /srv/seedbox/incomplete
+
+#label token from add torrent with label
+schedule2 = watch_directory_1,10,10,"load_start=/srv/seedbox/watch/*.torrent,d.set_custom1=/srv/seedbox/downloads"
+
+# Add new method to get finished dir
+method.insert = d.get_finished_dir,simple,"cat=/srv/seedbox/downloads/,$d.get_custom1="
+method.insert = d.data_path, simple, "if=(d.is_multi_file), (cat,(d.directory),/), (cat,(d.directory),/,(d.name))"
+method.insert = d.get_data_full_path, simple, "branch=((d.is_multi_file)),((cat,(d.directory))),((cat,(d.directory),/,(d.name)))"
+
+##Run cron to save in db
+#schedule2 = track_torrents,10,15,"execute=curl,127.0.0.1/kapi/ping/"
+##method.set_key = event.download.erased,cleardb_erased,"execute=curl,(cat,127.0.0.1/kapi/ping/,$d.hash=)"
+
+method.set_key = event.download.finished,move_complete,"d.set_directory=$d.get_finished_dir=;execute=mkdir,-p,$d.get_finished_dir=;execute=mv,-u,$d.get_base_path=,$d.get_finished_dir=;execute=node,/opt/axabot/_process_axxe_.js,$d.hash=,$d.get_custom1=,$d.get_finished_dir=,$d.get_name="
+
+#Test Extend size XML-RPC
+network.xmlrpc.size_limit.set = 4M
+network.receive_buffer.size.set =  4M
+network.send_buffer.size.set    = 12M
+
+#Debug
+log.open_file = "rtorrent", /tmp/rtorrent.log
+
+log.add_output = "critical", "rtorrent"
+log.add_output = "error", "rtorrent"
+log.add_output = "warn", "rtorrent"
+
+#Log RPC
+log.open_file = "rpc.log", /tmp/rpc.log
+log.add_output = "rpc_events", "rpc.log"
+
+log.open_file = "rpc_dump.log", /tmp/rpc_dump.log
+log.add_output = "rpc_dump", "rpc_dump.log"

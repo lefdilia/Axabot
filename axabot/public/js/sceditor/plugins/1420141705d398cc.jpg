@@ -1,0 +1,200 @@
+{
+    "CONNECTIONS_TITLE": "Liste des connexions",
+    "DOCUMENTS_TEXT": "Documents",
+    "INDEXES_TEXT": "Index",
+    "QUERY_LOG_TEXT": "Journal des requêtes",
+    "SCHEMA_TEXT": "Schéma",
+
+    "DROPDOWN_DELETE_SELECTED": "Supprimer la sélection",
+    "DROPDOWN_ADD_INDEX": "Ajouter un index",
+    "DROPDOWN_EXPORT_COLLECTION": "Exporter la collection",
+    "DROPDOWN_IMPORT_DATA": "Importer des données",
+    "DROPDOWN_CLEAR_COLLECTION": "Effacer la collection",
+    "DROPDOWN_DROP_COLLECTION": "Supprimer la collection",
+
+    "HELPER_COUNTDOCI": "Doc",
+    "HELPER_COUNTDOCIS": "Docs",
+    "HELPER_MNVERSION": "Version MongoDB",
+    "HELPER_MNPID": "ID du processus",
+    "HELPER_MNUPTIME": "Disponibilité du serveur",
+
+    "HELPER_SIDEMENU_CRCOLLECTION": "Créer une collection",
+    "HELPER_SIDEMENU_EXPDATABASE": "Exporter la base de données",
+    "HELPER_SIDEMENU_DROPDATABASE": "Supprimer la base de données",
+    "HELPER_SIDEMENU_ADDNEWDATABASE": "Ajouter une base de données",
+
+    "HELPER_QUERY_TEXT": "Requête",
+    "HELPER_QUERYON_TEXT": "sur",
+
+    "_ID_TEXT": "_id",
+    "DOCUMENT_TEXT": "Document",
+    "NO_DOCUMENT_FOUND": "Aucun document trouvé!",
+
+    "QUERYLOG_NAMESPACE_TEXT": "NameSpace",
+    "QUERYLOG_EXECUTED_TEXT": "Exécuté",
+    "QUERYLOG_DOC_EXAMINED_TEXT": "Documents examinés",
+    "QUERYLOG_DOC_MODIFIED_TEXT": "Documents modifiés",
+    "QUERYLOG_DOC_INSERTED_TEXT": "Documents insérés",
+    "QUERYLOG_DOC_ELAPSED_TEXT": "écoulés",
+    "QUERYLOG_DOC_RESPONSE_SIZE_TEXT": "Taille de la réponse",
+    "QUERYLOG_DOC_RESPONSE_SIZE_UNIT_TEXT": "Octet",
+
+    "QUERYLOG_OPERATION": "Opération",
+    "QUERYLOG_INFOS": "Infos",
+
+    "FOOTER_COPYRIGHT": "Mngui © 2018 - Tous droits réservés.",
+
+    "MODAL_CREATECOL_ADD_COL": "Ajouter une nouvelle collection",
+    "MODAL_CREATECOL_DATABASE_TEXT": "Base de données",
+    "MODAL_CREATECOL_CANCEL": "Annuler",
+    "MODAL_CREATECOL_ADD": "Ajouter",
+
+    "MODAL_MEXPORTCOL_EXPORT_COL": "Exporter la collection",
+    "MODAL_MEXPORTCOL_EXC_ID": "Except _id",
+    "MODAL_MEXPORTCOL_CANCEL": "Annuler",
+    "MODAL_MEXPORTCOL_EXPORT": "Exporter",
+
+    "MODAL_ADDNEWDATABASE_ADD_DB": "Ajouter une base de données",
+    "MODAL_ADDNEWDATABASE_DB_NAME": "Nom de la base de données",
+    "MODAL_ADDNEWDATABASE_COL_NAME": "Nom de la collection",
+    "MODAL_ADDNEWDATABASE_IMP_FULL_DB": "Importer la base de données complète",
+    "MODAL_ADDNEWDATABASE_IMP_TEXT_STAR": "*Seul fichier zip autorisé",
+    "MODAL_ADDNEWDATABASE_IMP_TEXT_BTN": "Choisir le fichier",
+    "MODAL_ADDNEWDATABASE_IMP_TEXT_MSG": "Seules les bases de données exportées avec `Mongodump` sont autorisées",
+    "MODAL_ADDNEWDATABASE_IMP_TEXT_CNL": "Annuler",
+    "MODAL_ADDNEWDATABASE_IMP_TEXT_CREATE": "Créer",
+
+    "MODAL_ADDINDEX": "Ajouter un index",
+    "MODAL_DATABASE": "Base de données",
+    "MODAL_CHOOSE_FIELD": "Choisissez les champs",
+    "MODAL_UNIQUE_TEXT": "Unique",
+    "MODAL_UNIQUE_FIELD": "Supprimer les valeurs en double (Préexistantes)",
+    "MODAL_SPARSE_FIELD": "Sparse",
+    "MODAL_BUILD_BG_FIELD": "Créer l'index en arrière-plan",
+    "MODAL_BUILD_CANCEL": "Annuler",
+    "MODAL_BUILD_CREATE_INDEX": "Créer un index",
+
+    "MODAL_CONMD_C_TEXT": "Liste des connexions",
+    "MODAL_CONMD_CNAME_TEXT": "Nom",
+    "MODAL_CONMD_CSERVER_TEXT": "Serveur",
+    "MODAL_CONMD_CDEFAULT_TEXT": "Défaut",
+    "MODAL_CONMD_CSSH_TEXT": "SSH",
+    "MODAL_CONMD_CSSL_TEXT": "SSL",
+    "MODAL_CONMD_CAUTH_TEXT": "Authentification",
+
+    "MODAL_CONMD_C_LUPDT_TEXT": "Dernière mise à jour",
+
+    "MODAL_CONMD_C_CONNECT_TEXT": "Se connecter",
+    "MODAL_CONMD_C_NEWCONN_TEXT": "Nouvelle connexion",
+
+
+    "MODAL_CONMD_FNAME_TEXT": "Nom",
+    "MODAL_CONMD_FHOSTNAME_TEXT": "Host",
+    "MODAL_CONMD_FPORT_TEXT": "Port",
+    "MODAL_CONMD_FDATABASE_TEXT": "Base de données",
+    "MODAL_CONMD_FAUTH_TEXT": "Authentification",
+    "MODAL_CONMD_FAUTH_V0_TEXT": "Aucun",
+    "MODAL_CONMD_FAUTH_V1_TEXT": "Identifiant & Mot de passe",
+    "MODAL_CONMD_FAUTH_V2_TEXT": "Kerberos (GSSAPI/SSPI)",
+    "MODAL_CONMD_FAUTH_V3_TEXT": "LDAP (PLAIN)",
+    "MODAL_CONMD_FAUTH_V4_TEXT": "X509",
+
+
+    "MODAL_CONMD_SA_TEXT": "Identifiant",
+    "MODAL_CONMD_SP_TEXT": "Mot de passe",
+
+    "MODAL_CONMD_SSERVER_TEXT": "Serveur",
+    "MODAL_CONMD_SPRINCIPAL_TEXT": "Principal",
+    "MODAL_CONMD_SNAME_TEXT": "Nom du service",
+
+    "MODAL_CONMD_CONN_SSL": "Se connecter avec SSL",
+    "MODAL_CONMD_CONN_DEFAULT": "Connexion par défaut",
+    "MODAL_CONMD_CONN_CANCEL": "Annuler",
+    "MODAL_CONMD_CONN_SAVECONN": "Enregistrer et se connecter",
+
+
+    "TOPF_COL_TXT": "Collections",
+    "TOPF_ALLOCATED_SIZE_TXT": "Taille allouée",
+    "TOPF_AVG_ALLOCATED_SIZE_TXT": "AVG Taille du document",
+    "TOPF_AVG_INDEXES_TXT": "Index",
+    "TOPF_AVG_TOTALSIZE_TXT": "Taille totale",
+
+    "TOPF_SAVEDOC_TXT": "Enregistrer le document",
+
+    "TOPF_RADIO_DOCUMENTS": "Documents",
+    "TOPF_RADIO_SHELL": "Shell",
+
+    "TOPF_RUN_QUERY": "Exécuter la requête",
+
+    "INDEXES_NAME": "nom",
+    "INDEXES_KEY": "Clé",
+    "INDEXES_SIZE": "Taille",
+    "INDEXES_UNIQUE": "Unique",
+
+
+
+
+
+    "CONFIG_TEXTS_TITLE": "Mngui interface graphique Open Source pour la gestion MongoDB ",
+    "CONFIG_TEXTS_ERROR_RUN_QUERY": "Erreur lors de l'exécution de la requête",
+    "CONFIG_TEXTS_CONN_REFRESH_SUCC": "Connexion actualisée avec succès.",
+    "CONFIG_TEXTS_MONGOERROR": "ERREUR Client",
+    "CONFIG_TEXTS_ERROR": "Erreur",
+    "CONFIG_TEXTS_SUCCESS": "Succès",
+    "CONFIG_TEXTS_CLEAR_CONN_FAILED": "Effacer la collecte a échoué",
+    "CONFIG_TEXTS_CLEAR_CONN_FAILED_PLEASE": "Effacer la collecte a échoué, veuillez choisir une collection. ",
+    "CONFIG_TEXTS_CANNOT_BE_CCLEAR_": "La Collection ne peut pas être effacer.",
+    "CONFIG_TEXTS_COL_IS_CLEAR_": "est effacé",
+    "CONFIG_TEXTS_DROP_CONN_FAILED": "Suppression de la collection a échoué ",
+    "CONFIG_TEXTS_DROP_CONN_FAILED_PLEASE": "Suppression de la collection a échoué, veuillez choisir une collection. ",
+    "CONFIG_TEXTS_COLL_CANNOT_DROPPED": "La collection ne peut pas être supprimée ",
+    "CONFIG_TEXTS_COLL_DROPPED_SUCCESS": "Supprimé avec succès ",
+    "CONFIG_TEXTS_DROP_DATABASE_FAILED": "La suppression de la base de données a échoué",
+    "CONFIG_TEXTS_CANNOT_DROP_DATABASE": "la base de données ne peut pas être supprimée ",
+    "CONFIG_TEXTS_SUCC_DROP_DATABASE_": "Supprimé avec succès",
+    "CONFIG_TEXTS_CREATE_COLL_": "la création de la collection a échoué.",
+    "CONFIG_TEXTS_SUCC_CREATE_COLL_": "Créé avec succès.",
+    "CONFIG_TEXTS_CREATE_DATABASE_FAILED_": "la création de la base de données et la collection a échoué.",
+    "CONFIG_TEXTS_CREATE_DATABASE_SUCCESS_": "Créé avec succès",
+    "CONFIG_TEXTS_TEST_MIME": "Mime type invalide, Seuls les fichiers ZIP autorisés.",
+
+    "CONFIG_TEXTS_IMPORT_DOC_FAILED": "L'importation de la base de données a échoué.",
+    "CONFIG_TEXTS_DATABASE_SUCCESS_RESTORE": "Base de données restaurée avec succès",
+    "CONFIG_TEXTS_DATABASE_ERROR_RESTORE": "Erreur d'exportation de la base de données. Veuillez réessayer.",
+    "CONFIG_TEXTS_IMPORT_D_FAILED": "l'importation du document a échoué.",
+    "CONFIG_TEXTS_ERR_PARSING": "Erreur lors de l'extraction des données JSON.",
+    "CONFIG_TEXTS_ERR_DOC_INSERTED": "Erreur lors de l'insertion du documents.",
+
+    "CONFIG_TEXTS_DOC_INSERTED": "Documents insérés",
+    "CONFIG_TEXTS_DOC_ID_NOT_AVB": "_id du document est indisponible",
+    "CONFIG_TEXTS_DOC_RMV_FAIL": "La Suppression du document a échoué",
+    "CONFIG_TEXTS_0_DOC_REMOVED": "0 Document supprimé",
+    "CONFIG_TEXTS_DOC_SUCC_REMOVED": "Document supprimé avec succès",
+    "CONFIG_TEXTS_DOC_INDEX_NOT": "L'index du Document est indisponible",
+
+    "CONFIG_TEXTS_DOC_REMOVE_FAILED": "La Suppression d'index a échoué ",
+    "CONFIG_TEXTS_DOC_REMOVE_SUCCESS": "L'Index a été supprimé avec succès",
+    "CONFIG_TEXTS_CANNOT_EXPORT": "Impossible d'exporter ",
+    "CONFIG_TEXTS_COLLECTION_EXPORT_SUCCESS": "Sauvegarde de la collection a été créé avec succès",
+
+    "CONFIG_TEXTS_BACKUP_SUCCESS": "Sauvegarde créée avec succès",
+    "CONFIG_TEXTS_BACKUP_ERROR": "Erreur d'exportation de la base de données. Veuillez réessayer",
+    "CONFIG_TEXTS_BACKUP_FILE_ERROR": "Erreur de fichier. Veuillez réessayer.",
+    "CONFIG_TEXTS_INDEX_SUCCESS_CREATE": "Index créé avec succès",
+    "CONFIG_TEXTS_INDEX_FAILED": "L'édition du document a échoué.",
+
+    "CONFIG_TEXTS_DOCUMENT_EDITED": "Document Edité avec succès",
+    "CONFIG_TEXTS_DOCUMENT_UPDATED": "Document mis à jour avec succès",
+    "CONFIG_TEXTS_SUCCESS_SAVED": "Enregistré avec succès ",
+    "CONFIG_TEXTS_CONN_SUCCESS_SAVED": "Connexion enregistrée avec succès",
+    "CONFIG_TEXTS_CONN_SUCCESS_LISTED": "Connexion répertoriée avec succès",
+    "CONFIG_TEXTS_CONN_SUCCESS_REMOVED": "Connexion supprimée avec succès",
+    "CONFIG_TEXTS_CONN_SUCCESS_ESTABLISHED": "Connexion établie avec succès"
+
+
+
+
+
+
+
+}                                                                                                                                                                                                                                                               

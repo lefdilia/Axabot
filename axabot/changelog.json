@@ -1,0 +1,42 @@
+{
+  "unreleased": {
+    "0.1.0": [
+      "[New] Add File Hosts : []",
+      "[New] Add AutoPost for DLE, PHPBB"
+    ],
+    "*Ignored": [
+      "Keep2share.cc, Wdupload.com"
+    ]
+  },
+  "releases": {
+    "0.0.5": [
+      "[New] Remove torrent from rtorrent for 'Clear Finished Tasks'"
+    ],
+    "0.0.4_Stable": [
+      "[Fixed] Test First Stable Version"
+    ],
+    "0.0.4_beta": [
+      "[New] Add new File Hosts : Vidoza.net, Onlystream.tv, Mixdrop.co, Verystream.com, Anonfile.com, Saruch.co, Gounlimited.to, Katfile.com, dropapk.to, clipwatching.com, uploadgig.com",
+      "[New] Add Image Hosts : Pixhost.to",
+      "[new] Add AutoPost for Wordpress"
+    ],
+    "0.0.3_beta": [
+      "[new] Add image Host : Imgbox.com",
+      "[Fixed] Imgur.com upload images to user account",
+      "[Improved] Faster load",
+      "[Improved] Small Updates"
+    ],
+    "0.0.2_beta": [
+      "[new] Fix Page load, was slow due many Unused JS libraries",
+      "[Fixed] Fix order of Pinged torrents due invalid Date"
+    ],
+    "0.0.1_beta": [
+      "[New] Check Torrent Status, if task was sent to API",
+      "[Improved] Task Orders",
+      "[Improved] Small Updates"
+    ],
+    "0.0.0": [
+      "Beta Release of Axabot"
+    ]
+  }
+}
