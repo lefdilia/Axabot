@@ -43,7 +43,8 @@ Automatic web Application for download **(torrents)** & Upload to file sharing *
 - Install **rsync** : **`apt-get install rsync`**
 
 ##### - In new Terminal Tab
-- Open terminal on **`Axabot/_init`**
+- Open **Terminal** Or **Git** for Windows Users, you can download it from here : [Git-2.33.0.2-32-bit.exe](https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/Git-2.33.0.2-32-bit.exe)
+- Run `git clone https://github.com/lefdilia/Axabot.git && cd "$(basename "$_" .git)/_init"`
 - Run **`npm install`** ( To install dependencies )
 - Run **`npm start`** ( To start server setup )
 
